@@ -794,7 +794,7 @@ function clearLookup(){ document.getElementById('epf-lookup-input').value=''; do
 async function renderDashboard(){
   document.getElementById('dash-welcome').textContent = currentUser.name.split(' ').slice(-1)[0];
   const isAdmin=currentUser.role==='admin', isCEO=currentUser.role==='reporting', isEmp=currentUser.role==='employee';
-  document.getElementById('dash-apply-btn').style.display = isEmp?'':'none';
+  document.getElementById('dash-apply-btn').style.display = (isEmp||isCEO)?'':'none';
   document.getElementById('epf-lookup-card').style.display = (isAdmin||isCEO)?'block':'none';
   document.getElementById('audit-card').style.display = isAdmin?'block':'none';
 
