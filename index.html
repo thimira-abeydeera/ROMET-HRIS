@@ -1119,7 +1119,7 @@ async function submitLeave(){
   }
   const from=document.getElementById('a-from').value, to=document.getElementById('a-to').value;
   if(!from||!to){toast('Select dates','t-err');return;}
-  const days=getADays(); if(selLTypeVal!=='Short'&&days<1){toast('Invalid dates','t-err');return;}
+  const days=getADays(); if(selLTypeVal!=='Short'&&days<0.5){toast('Invalid dates','t-err');return;}
   if(selLTypeVal!=='Duty'){const bal=getBalance(u);if(typeof bal[selLTypeVal]==='number'&&days>bal[selLTypeVal]){toast(`Insufficient ${selLTypeVal} Leave`,'t-err');return;}}
   const reason=document.getElementById('a-reason').value.trim();
   showLoading('Submitting…');
