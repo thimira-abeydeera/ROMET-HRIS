@@ -354,8 +354,6 @@ tr:hover td{background:#fafffe;}
 
         <!-- REPORTING PERSON dashboard -->
         <div id="rep-dash" style="display:none;">
-          <!-- Leave balance cards -->
-          <div class="bal-grid" id="rep-bal-grid" style="margin-bottom:18px;"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
             <!-- Pending approvals from team -->
             <div class="table-card">
@@ -968,15 +966,6 @@ async function renderDashboard(){
       <div class="stat-card sc-blue"><div class="stat-icon">🏠</div><div class="stat-label">Casual</div><div class="stat-val">${typeof bal.Casual==='number'&&bal.Casual%1?bal.Casual.toFixed(1):bal.Casual}</div><div class="stat-sub">days remaining</div></div>
       <div class="stat-card sc-red"><div class="stat-icon">🏥</div><div class="stat-label">Medical</div><div class="stat-val">${bal.Medical}</div><div class="stat-sub">days remaining</div></div>
       <div class="stat-card sc-yellow"><div class="stat-icon">⏳</div><div class="stat-label">Pending Approvals</div><div class="stat-val">${pendingTeam.length}</div><div class="stat-sub">from your team</div></div>`;
-
-    // Own leave balance cards
-    const types=['Annual','Casual','Medical','Short','Duty'], icons=['🌴','🏠','🏥','⏱','🎖️'];
-    document.getElementById('rep-bal-grid').innerHTML=types.map((t,i)=>{
-      if(t==='Duty') return `<div class="bal-card" style="border-color:#c7d9fc;"><div class="bc-type">🎖️ Duty</div><div class="bc-num" style="color:var(--blue);">∞</div><div class="bc-of">No limit</div><div class="bc-bar"><div class="bc-fill" style="width:100%;background:var(--blue);opacity:.3;"></div></div></div>`;
-      if(t==='Short') return `<div class="bal-card${stm>=2?' low':''}"><div class="bc-type">⏱ Short</div><div class="bc-num">${2-stm}</div><div class="bc-of">of 2 this month</div><div class="bc-bar"><div class="bc-fill" style="width:${Math.max(0,(1-stm/2)*100)}%"></div></div></div>`;
-      const ent=getEntitlements(currentUser); const pct=ent[t]>0?(bal[t]/ent[t])*100:0;
-      return `<div class="bal-card${typeof bal[t]==='number'&&bal[t]<=1?' low':''}"><div class="bc-type">${icons[i]} ${t}</div><div class="bc-num">${typeof bal[t]==='number'&&bal[t]%1?bal[t].toFixed(1):bal[t]}</div><div class="bc-of">of ${typeof ent[t]==='number'&&ent[t]%1?ent[t].toFixed(1):ent[t]} days</div><div class="bc-bar"><div class="bc-fill" style="width:${pct}%"></div></div></div>`;
-    }).join('');
 
     // Pending approvals
     document.getElementById('rep-pending-body').innerHTML = pendingTeam.length ? pendingTeam.map(r=>{
