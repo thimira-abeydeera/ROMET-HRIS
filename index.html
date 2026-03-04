@@ -261,6 +261,7 @@ tr:hover td{background:#fafffe;}
         <div><div class="sb-uname" id="sb-uname">User</div><div class="sb-urole" id="sb-urole">Role</div></div>
         <button class="logout-btn" onclick="doLogout()" title="Logout">⏻</button>
       </div>
+      <button onclick="openChangePwd()" style="margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--mid);font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .18s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--mid)';">🔒 Change Password</button>
     </div>
   </div>
 
@@ -522,6 +523,31 @@ tr:hover td{background:#fafffe;}
   </div>
 </div>
 
+<!-- Change Password Modal -->
+<div class="overlay" id="pwd-modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title">🔒 Change Password</div>
+    <div class="modal-sub">Update your login password</div>
+    <div class="field" style="margin-top:16px;">
+      <label>Current Password</label>
+      <input type="password" id="pwd-current" placeholder="Enter current password" />
+    </div>
+    <div class="field">
+      <label>New Password</label>
+      <input type="password" id="pwd-new" placeholder="Enter new password (min 6 chars)" />
+    </div>
+    <div class="field">
+      <label>Confirm New Password</label>
+      <input type="password" id="pwd-confirm" placeholder="Re-enter new password" />
+    </div>
+    <div class="alert" id="pwd-alert"></div>
+    <div style="display:flex;gap:10px;margin-top:6px;">
+      <button class="btn btn-primary" onclick="submitChangePwd()">Update Password</button>
+      <button class="btn btn-outline" onclick="closeChangePwd()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Employee Modal -->
 <div class="overlay" id="emp-modal-overlay">
   <div class="modal">
@@ -730,7 +756,6 @@ function setupSidebar(){
     {icon:'🌿',label:'My Leave',view:'my-leave'},
     {icon:'✏️',label:'Apply for Leave',view:'apply'},
     {icon:'📋',label:'Approvals',view:'requests',count:allRequests.filter(r=>r.status==='Pending'&&allUsers[r.user_id]?.reporting===currentUser.id).length},
-    {icon:'📈',label:'Reports',view:'reports'},
   ];
   else items=[{icon:'📊',label:'Dashboard',view:'dashboard'},{icon:'🌿',label:'My Leave',view:'my-leave'},{icon:'✏️',label:'Apply for Leave',view:'apply'}];
   document.getElementById('sb-nav').innerHTML = items.map(i=>`
@@ -1392,6 +1417,41 @@ function exportExcel(){
 }
 
 // ═══════════════════════════════════════════
+// CHANGE PASSWORD
+// ═══════════════════════════════════════════
+function openChangePwd(){
+  document.getElementById('pwd-current').value='';
+  document.getElementById('pwd-new').value='';
+  document.getElementById('pwd-confirm').value='';
+  document.getElementById('pwd-alert').className='alert';
+  document.getElementById('pwd-modal-overlay').style.display='flex';
+}
+function closeChangePwd(){
+  document.getElementById('pwd-modal-overlay').style.display='none';
+}
+async function submitChangePwd(){
+  const curr=document.getElementById('pwd-current').value;
+  const nw=document.getElementById('pwd-new').value;
+  const conf=document.getElementById('pwd-confirm').value;
+  const al=document.getElementById('pwd-alert');
+  al.className='alert';
+  if(!curr||!nw||!conf){al.className='alert a-err show';al.textContent='Please fill in all fields.';return;}
+  if(curr!==currentUser.password){al.className='alert a-err show';al.textContent='Current password is incorrect.';return;}
+  if(nw.length<6){al.className='alert a-err show';al.textContent='New password must be at least 6 characters.';return;}
+  if(nw!==conf){al.className='alert a-err show';al.textContent='New passwords do not match.';return;}
+  showLoading('Updating password…');
+  try{
+    await sbPatch('users',`id=eq.${currentUser.id}`,{password:nw});
+    currentUser.password=nw;
+    allUsers[currentUser.id].password=nw;
+    await sbPost('audit',{user_id:currentUser.id,action:'Changed their password'});
+    closeChangePwd();
+    toast('Password updated successfully! ✓','t-ok');
+  }catch(e){al.className='alert a-err show';al.textContent='Error: '+e.message;}
+  hideLoading();
+}
+
+// ═══════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════
 function fmt(ds){if(!ds)return'—';try{const d=new Date(ds+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch{return ds;}}
@@ -1403,6 +1463,7 @@ function hideLoading(){const o=document.getElementById('loading-overlay');if(o)o
 
 // Close overlays
 document.getElementById('emp-modal-overlay').addEventListener('click',function(e){if(e.target===this)closeEmpModal();});
+document.getElementById('pwd-modal-overlay').addEventListener('click',function(e){if(e.target===this)closeChangePwd();});
 document.getElementById('leave-modal-overlay').addEventListener('click',function(e){if(e.target===this)closeLM();});
 document.addEventListener('click',function(e){if(!e.target.closest('#notif-panel')&&!e.target.closest('#notif-bell'))closeNotif();});
 
