@@ -333,8 +333,8 @@ tr:hover td{background:#fafffe;}
         <div class="section-hdr"><div><div class="section-title">Apply for Leave</div><div class="section-sub">Submit a leave request</div></div></div>
         <div class="form-grid">
           <div class="form-card">
-            <div class="fc-title">Step 1 — Select Leave Type</div>
-            <div class="ltype-grid" style="margin-bottom:18px;">
+            <div class="fc-title">Select Leave Type</div>
+            <div class="ltype-grid" style="margin-bottom:20px;">
               <div class="ltype-btn" onclick="selLType('Annual')" id="lt-Annual"><div class="li">🌴</div>Annual</div>
               <div class="ltype-btn" onclick="selLType('Casual')" id="lt-Casual"><div class="li">🏠</div>Casual</div>
               <div class="ltype-btn" onclick="selLType('Medical')" id="lt-Medical"><div class="li">🏥</div>Medical</div>
@@ -342,50 +342,45 @@ tr:hover td{background:#fafffe;}
               <div class="ltype-btn" onclick="selLType('Duty')" id="lt-Duty" style="border-color:var(--blue);color:var(--blue);"><div class="li">🎖️</div>Duty</div>
             </div>
 
-            <!-- STEP 2: shown after leave type selected -->
-            <div id="apply-step2" style="display:none;">
-
-              <!-- DATE SECTION (hidden for Short) -->
-              <div id="date-section" style="margin-bottom:14px;">
-                <div class="fc-title" style="margin-bottom:10px;">Step 2 — Select Dates</div>
-                <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-                  <div class="field" style="flex:1;min-width:120px;margin-bottom:0"><label>From Date</label><input type="date" id="a-from" onchange="calcADays()" /></div>
-                  <div class="field" id="a-to-wrap" style="flex:1;min-width:120px;margin-bottom:0"><label>To Date</label><input type="date" id="a-to" onchange="calcADays()" /></div>
-                  <div class="days-badge" id="a-days-badge" style="margin-bottom:2px;">—</div>
+            <!-- NON-SHORT: date + half day -->
+            <div id="normal-section" style="display:none;">
+              <div class="fc-title" style="margin-bottom:10px;">Select Dates</div>
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px;">
+                <div class="field" style="flex:1;min-width:120px;margin-bottom:0"><label>From Date</label><input type="date" id="a-from" onchange="calcADays()" /></div>
+                <div class="field" id="a-to-wrap" style="flex:1;min-width:120px;margin-bottom:0"><label>To Date</label><input type="date" id="a-to" onchange="calcADays()" /></div>
+                <div class="days-badge" id="a-days-badge" style="margin-bottom:2px;">—</div>
+              </div>
+              <div class="fc-title" style="margin-bottom:10px;">Full Day or Half Day?</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
+                <div id="hd-full" onclick="selHalfDay('full')" style="border:2px solid var(--accent);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:var(--accent);color:#fff;font-size:13px;font-weight:700;transition:all .2s;">
+                  📅<div style="margin-top:5px;">Full Day</div>
+                </div>
+                <div id="hd-first" onclick="selHalfDay('first')" style="border:2px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:13px;font-weight:600;transition:all .2s;">
+                  🌅<div style="margin-top:5px;">First Half</div><div style="font-size:11px;margin-top:3px;">8am – 12pm</div>
+                </div>
+                <div id="hd-second" onclick="selHalfDay('second')" style="border:2px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:13px;font-weight:600;transition:all .2s;">
+                  🌇<div style="margin-top:5px;">Second Half</div><div style="font-size:11px;margin-top:3px;">12pm – 5pm</div>
                 </div>
               </div>
+            </div>
 
-              <!-- HALF DAY (for Annual, Casual, Medical, Duty) -->
-              <div id="halfday-section" style="display:none;margin-bottom:14px;">
-                <div class="fc-title" style="margin-bottom:8px;">Step 3 — Full Day or Half Day?</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                  <div id="hd-full" onclick="selHalfDay('full')" style="border:2px solid var(--accent);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;background:var(--accent);color:white;font-size:12px;font-weight:700;transition:all .2s;">
-                    📅<div style="margin-top:4px;">Full Day</div>
-                  </div>
-                  <div id="hd-first" onclick="selHalfDay('first')" style="border:2px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:12px;font-weight:600;transition:all .2s;">
-                    🌅<div style="margin-top:4px;">First Half</div><div style="font-size:10px;margin-top:2px;">8am – 12pm</div>
-                  </div>
-                  <div id="hd-second" onclick="selHalfDay('second')" style="border:2px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:12px;font-weight:600;transition:all .2s;">
-                    🌇<div style="margin-top:4px;">Second Half</div><div style="font-size:10px;margin-top:2px;">12pm – 5pm</div>
-                  </div>
+            <!-- SHORT LEAVE: date + time slot -->
+            <div id="short-section" style="display:none;">
+              <div class="fc-title" style="margin-bottom:10px;">Select Date</div>
+              <div class="field" style="margin-bottom:18px;"><input type="date" id="a-short-date" /></div>
+              <div class="fc-title" style="margin-bottom:10px;">Select Time Slot</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+                <div id="st-morning" onclick="selShortTime('morning')" style="border:2px solid var(--border);border-radius:10px;padding:16px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:14px;font-weight:600;transition:all .2s;">
+                  🌅<div style="margin-top:6px;font-size:13px;">Morning</div><div style="font-size:11px;margin-top:4px;">8:00am – 9:30am</div>
+                </div>
+                <div id="st-evening" onclick="selShortTime('evening')" style="border:2px solid var(--border);border-radius:10px;padding:16px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:14px;font-weight:600;transition:all .2s;">
+                  🌇<div style="margin-top:6px;font-size:13px;">Evening</div><div style="font-size:11px;margin-top:4px;">3:30pm – 5:00pm</div>
                 </div>
               </div>
+            </div>
 
-              <!-- SHORT LEAVE TIME SLOT -->
-              <div id="short-section" style="display:none;margin-bottom:14px;">
-                <div class="fc-title" style="margin-bottom:8px;">Step 2 — Select Date & Time Slot</div>
-                <div class="field" style="margin-bottom:10px;"><label>Date</label><input type="date" id="a-short-date" onchange="calcADays()" /></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                  <div id="st-morning" onclick="selShortTime('morning')" style="border:2px solid var(--accent);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:var(--accent);color:white;font-size:13px;font-weight:700;transition:all .2s;">
-                    🌅<div style="margin-top:5px;">Morning</div><div style="font-size:11px;margin-top:3px;opacity:.85;">8:00am – 9:30am</div>
-                  </div>
-                  <div id="st-evening" onclick="selShortTime('evening')" style="border:2px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:13px;font-weight:600;transition:all .2s;">
-                    🌇<div style="margin-top:5px;">Evening</div><div style="font-size:11px;margin-top:3px;">3:30pm – 5:00pm</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- REASON -->
+            <!-- REASON + ALERT (always shown once type selected) -->
+            <div id="reason-section" style="display:none;">
               <div class="field"><label>Reason <span style="color:var(--dim);font-weight:400">(optional)</span></label><textarea id="a-reason" placeholder="Reason for leave…"></textarea></div>
               <div class="alert" id="a-alert"></div>
             </div>
@@ -938,29 +933,39 @@ function renderMyLeave(){
 // ═══════════════════════════════════════════
 let selLTypeVal=null;
 let halfDayVal='full';
-let shortTimeVal='morning';
+let shortTimeVal=null;
+
+function show(id){ document.getElementById(id).style.display='block'; }
+function hide(id){ document.getElementById(id).style.display='none'; }
 
 function selShortTime(val){
   shortTimeVal=val;
+  const ACC='var(--accent)', WHT='#fff', BRD='var(--border)', MID='var(--mid)';
   ['morning','evening'].forEach(h=>{
     const el=document.getElementById('st-'+h); if(!el) return;
-    if(h===val){ el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)'; el.style.fontWeight='700'; }
-    else { el.style.background='#fff'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)'; el.style.fontWeight='600'; }
+    const on=(h===val);
+    el.style.background=on?ACC:WHT;
+    el.style.color=on?WHT:MID;
+    el.style.borderColor=on?ACC:BRD;
+    el.style.fontWeight=on?'700':'600';
   });
   checkApplyBal();
 }
 
 function selHalfDay(val){
   halfDayVal=val;
+  const ACC='var(--accent)', WHT='#fff', BRD='var(--border)', MID='var(--mid)';
   ['full','first','second'].forEach(h=>{
     const el=document.getElementById('hd-'+h); if(!el) return;
-    if(h===val){ el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)'; el.style.fontWeight='700'; }
-    else { el.style.background='#fff'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)'; el.style.fontWeight='600'; }
+    const on=(h===val);
+    el.style.background=on?ACC:WHT;
+    el.style.color=on?WHT:MID;
+    el.style.borderColor=on?ACC:BRD;
+    el.style.fontWeight=on?'700':'600';
   });
-  // If half day selected, lock To = From
   if(val==='first'||val==='second'){
     const f=document.getElementById('a-from').value;
-    document.getElementById('a-to').value=f;
+    if(f) document.getElementById('a-to').value=f;
     document.getElementById('a-to-wrap').style.opacity='0.4';
     document.getElementById('a-days-badge').textContent=val==='first'?'½ day AM':'½ day PM';
     document.getElementById('a-days-badge').className='days-badge';
@@ -973,15 +978,15 @@ function selHalfDay(val){
 
 function renderApply(){
   const today=new Date().toISOString().split('T')[0];
-  selLTypeVal=null; halfDayVal='full'; shortTimeVal='morning';
+  selLTypeVal=null; halfDayVal='full'; shortTimeVal=null;
   document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('apply-step2').style.display='none';
-  document.getElementById('apply-submit-card').style.display='none';
+  hide('normal-section'); hide('short-section'); hide('reason-section'); hide('apply-submit-card');
   const badge=document.getElementById('a-days-badge'); if(badge) badge.textContent='—';
   const al=document.getElementById('a-alert'); if(al) al.className='alert';
   const af=document.getElementById('a-from'); if(af) af.value=today;
   const at=document.getElementById('a-to'); if(at) at.value=today;
   const sd=document.getElementById('a-short-date'); if(sd) sd.value=today;
+  const ar=document.getElementById('a-reason'); if(ar) ar.value='';
   updateApplyBalance();
   const isAdmin=currentUser.role==='admin';
   document.getElementById('apply-emp-wrap').style.display=isAdmin?'block':'none';
@@ -993,26 +998,19 @@ function renderApply(){
 function getApplyUser(){ return currentUser.role==='admin'?allUsers[document.getElementById('a-emp-id')?.value]||currentUser:currentUser; }
 
 function selLType(t){
-  selLTypeVal=t;
-  halfDayVal='full'; shortTimeVal='morning';
+  selLTypeVal=t; halfDayVal='full'; shortTimeVal=null;
   document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('lt-'+t).classList.add('active');
-
-  // Show step 2 and submit
-  document.getElementById('apply-step2').style.display='block';
-  document.getElementById('apply-submit-card').style.display='block';
-
+  show('reason-section');
+  show('apply-submit-card');
   if(t==='Short'){
-    document.getElementById('date-section').style.display='none';
-    document.getElementById('halfday-section').style.display='none';
-    document.getElementById('short-section').style.display='block';
-    // Reset short time buttons
-    selShortTime('morning');
+    hide('normal-section');
+    show('short-section');
+    // default no slot selected — user must pick
+    selShortTime(null);
   } else {
-    document.getElementById('date-section').style.display='block';
-    document.getElementById('halfday-section').style.display='block';
-    document.getElementById('short-section').style.display='none';
-    // Reset to full day
+    show('normal-section');
+    hide('short-section');
     selHalfDay('full');
     document.getElementById('a-to-wrap').style.opacity='1';
     calcADays();
@@ -1034,12 +1032,7 @@ function updateApplyBalance(){
   checkApplyBal();
 }
 function calcADays(){
-  if(selLTypeVal==='Short'){
-    // sync short date to from/to
-    const sd=document.getElementById('a-short-date');
-    if(sd&&sd.value){ document.getElementById('a-from').value=sd.value; document.getElementById('a-to').value=sd.value; }
-    return;
-  }
+  if(selLTypeVal==='Short') return;
   const f=document.getElementById('a-from').value, t=document.getElementById('a-to').value, badge=document.getElementById('a-days-badge');
   if(!f||!t) return;
   if(halfDayVal==='first'||halfDayVal==='second'){
@@ -1067,15 +1060,12 @@ function checkApplyBal(){
   if(typeof b==='number'&&days>b){al.className='alert a-err show';al.textContent=`⚠ Insufficient ${selLTypeVal} Leave. Requesting ${days} day(s), only ${b} remaining.`;}
   else al.className='alert';
 }
-function clearApplyForm(){
-  renderApply();
-}
+function clearApplyForm(){ renderApply(); }
 async function submitLeave(){
   const u=getApplyUser(); if(!u){toast('Select employee','t-err');return;}
   if(!selLTypeVal){toast('Select leave type','t-err');return;}
-  if(selLTypeVal==='Short'&&!shortTimeVal){toast('Select a time slot (Morning or Evening)','t-err');return;}
-  // For short leave, use the short date picker
   if(selLTypeVal==='Short'){
+    if(!shortTimeVal){toast('Please select Morning or Evening slot','t-err');return;}
     const sd=document.getElementById('a-short-date').value;
     if(!sd){toast('Select a date for short leave','t-err');return;}
     document.getElementById('a-from').value=sd; document.getElementById('a-to').value=sd;
