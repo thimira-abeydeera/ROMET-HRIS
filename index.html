@@ -1540,13 +1540,48 @@ function exportExcel(){
 // ═══════════════════════════════════════════
 let allHolidays = [];
 
-// No default holidays — admin adds holidays manually
+const SL_HOLIDAYS = [
+  // ── 2026 Sri Lanka Statutory Holidays (Shop & Office Act) ──
+  {date:'2026-01-03',name:'Duruthu Full Moon Poya Day',type:'Poya'},
+  {date:'2026-01-14',name:'Tamil Thai Pongal Day',type:'National'},
+  {date:'2026-02-01',name:'Navam Full Moon Poya Day',type:'Poya'},
+  {date:'2026-02-04',name:'Independence Day',type:'National'},
+  {date:'2026-02-15',name:'Maha Sivarathri Day',type:'National'},
+  {date:'2026-03-02',name:'Medin Full Moon Poya Day',type:'Poya'},
+  {date:'2026-03-20',name:'Id-ul-Fitr (Ramazan Festival)',type:'National'},
+  {date:'2026-04-01',name:'Bak Full Moon Poya Day',type:'Poya'},
+  {date:'2026-04-03',name:'Good Friday',type:'National'},
+  {date:'2026-04-13',name:'Sinhala & Tamil New Year Eve',type:'National'},
+  {date:'2026-04-14',name:'Sinhala & Tamil New Year Day',type:'National'},
+  {date:'2026-04-30',name:'Vesak Full Moon Poya Day',type:'Poya'},
+  {date:'2026-05-01',name:'Labour Day',type:'National'},
+  {date:'2026-05-28',name:'Id-ul-Alha (Hadji Festival)',type:'National'},
+  {date:'2026-05-30',name:'Poson Full Moon Poya Day',type:'Poya'},
+  {date:'2026-06-29',name:'Esala Full Moon Poya Day',type:'Poya'},
+  {date:'2026-07-28',name:'Nikini Full Moon Poya Day',type:'Poya'},
+  {date:'2026-08-27',name:'Binara Full Moon Poya Day',type:'Poya'},
+  {date:'2026-09-25',name:'Milad-un-Nabi (Prophet\'s Birthday)',type:'National'},
+  {date:'2026-09-26',name:'Vap Full Moon Poya Day',type:'Poya'},
+  {date:'2026-10-25',name:'Deepavali Festival Day',type:'National'},
+  {date:'2026-10-26',name:'Il Full Moon Poya Day',type:'Poya'},
+  {date:'2026-11-24',name:'Unduvap Full Moon Poya Day',type:'Poya'},
+  {date:'2026-12-25',name:'Christmas Day',type:'National'},
+];
 
 async function loadHolidays(){
   try {
     const h = await sbGet('holidays','order=date.asc');
     allHolidays = h || [];
-// No auto-seed
+    // Auto-seed Sri Lanka statutory holidays if table is empty
+    if(allHolidays.length === 0){
+      showLoading('Loading Sri Lanka public holidays…');
+      for(const hol of SL_HOLIDAYS){
+        try { await sbPost('holidays', hol); } catch(e){}
+      }
+      const h2 = await sbGet('holidays','order=date.asc');
+      allHolidays = h2 || [];
+      hideLoading();
+    }
   } catch(e){ allHolidays = []; }
 }
 
