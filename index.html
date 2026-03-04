@@ -266,10 +266,12 @@ tr:hover td{background:#fafffe;}
 
   <div class="main-content">
     <div class="topbar">
-      <div class="topbar-title" id="topbar-title"></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-title" id="topbar-title" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--accent);letter-spacing:.3px;"></div>
+      </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <div class="notif-bell" onclick="toggleNotif()" id="notif-bell">🔔<div class="notif-dot" id="notif-dot"></div></div>
-        <button class="btn btn-outline btn-sm" onclick="exportExcel()">⬇ Export</button>
+        <button class="btn btn-outline btn-sm" id="topbar-export-btn" onclick="exportExcel()" style="display:none;">⬇ Export</button>
       </div>
     </div>
     <div class="notif-panel" id="notif-panel">
@@ -750,6 +752,9 @@ async function showView(v){
   document.getElementById('sb-'+v)?.classList.add('active');
   const titles={dashboard:'Dashboard','my-leave':'My Leave',apply:'Apply for Leave',requests:'Leave Requests',employees:'Employees',reports:'Reports',settings:'Settings'};
   document.getElementById('topbar-title').textContent = titles[v]||v;
+  // Show export only for admin
+  const expBtn=document.getElementById('topbar-export-btn');
+  if(expBtn) expBtn.style.display=(currentUser&&currentUser.role==='admin')?'inline-flex':'none';
   showLoading('Loading…');
   await refreshData();
   hideLoading();
