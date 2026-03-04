@@ -539,10 +539,7 @@ tr:hover td{background:#fafffe;}
         <div class="table-card">
           <div class="table-head">
             <div class="table-head-title">📅 Holiday Calendar</div>
-            <select class="filter-sel" id="holiday-year-filter" onchange="renderHolidays()">
-              <option value="2024">2024</option>
-              <option value="2025" selected>2025</option>
-              <option value="2026">2026</option>
+            <select class="filter-sel" id="holiday-year-filter" onchange="renderHolidays()" id="holiday-year-filter">
             </select>
           </div>
           <table><thead><tr><th>Date</th><th>Day</th><th>Holiday Name</th><th>Type</th><th>Actions</th></tr></thead>
@@ -1543,44 +1540,13 @@ function exportExcel(){
 // ═══════════════════════════════════════════
 let allHolidays = [];
 
-const SL_DEFAULT_HOLIDAYS_2025 = [
-  {date:'2025-01-14',name:"Thai Pongal",type:"National"},
-  {date:'2025-01-15',name:"Duruthu Full Moon Poya",type:"Poya"},
-  {date:'2025-02-04',name:"National Day",type:"National"},
-  {date:'2025-02-12',name:"Navam Full Moon Poya",type:"Poya"},
-  {date:'2025-02-26',name:"Maha Sivarathri",type:"National"},
-  {date:'2025-03-13',name:"Medin Full Moon Poya",type:"Poya"},
-  {date:'2025-03-31',name:"Id-ul-Fitr (Ramazan)",type:"National"},
-  {date:'2025-04-13',name:"Bak Full Moon Poya",type:"Poya"},
-  {date:'2025-04-14',name:"Sinhala & Tamil New Year Eve",type:"National"},
-  {date:'2025-04-18',name:"Good Friday",type:"National"},
-  {date:'2025-05-01',name:"Labour Day",type:"National"},
-  {date:'2025-05-12',name:"Vesak Full Moon Poya",type:"Poya"},
-  {date:'2025-05-13',name:"Day following Vesak",type:"National"},
-  {date:'2025-06-07',name:"Id-ul-Alha (Hadji)",type:"National"},
-  {date:'2025-06-11',name:"Poson Full Moon Poya",type:"Poya"},
-  {date:'2025-07-10',name:"Esala Full Moon Poya",type:"Poya"},
-  {date:'2025-08-08',name:"Nikini Full Moon Poya",type:"Poya"},
-  {date:'2025-09-05',name:"Milad-un-Nabi",type:"National"},
-  {date:'2025-09-07',name:"Binara Full Moon Poya",type:"Poya"},
-  {date:'2025-10-06',name:"Vap Full Moon Poya",type:"Poya"},
-  {date:'2025-10-20',name:"Deepavali",type:"National"},
-  {date:'2025-11-05',name:"Il Full Moon Poya",type:"Poya"},
-  {date:'2025-12-04',name:"Unduvap Full Moon Poya",type:"Poya"},
-  {date:'2025-12-25',name:"Christmas Day",type:"National"},
-];
+// No default holidays — admin adds holidays manually
 
 async function loadHolidays(){
   try {
     const h = await sbGet('holidays','order=date.asc');
     allHolidays = h || [];
-    // Seed defaults if empty
-    if(allHolidays.length === 0){
-      for(const h of SL_DEFAULT_HOLIDAYS_2025){
-        await sbPost('holidays', h);
-      }
-      allHolidays = await sbGet('holidays','order=date.asc') || [];
-    }
+// No auto-seed
   } catch(e){ allHolidays = []; }
 }
 
@@ -1590,23 +1556,38 @@ function isHoliday(dateStr){
 
 function isWeekend(dateStr){
   const d = new Date(dateStr + 'T00:00:00');
-  return d.getDay() === 0 || d.getDay() === 6;
+  return d.getDay() === 0; // Only Sunday is full off; Saturday is half day
 }
 
 function countWorkingDays(from, to){
-  // Count days excluding weekends and public holidays
+  // Weekdays = 1 day, Saturday = 0.5 day, Sunday & holidays = 0
   let count = 0;
   const start = new Date(from + 'T00:00:00');
   const end = new Date(to + 'T00:00:00');
   for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
     const ds = d.toISOString().split('T')[0];
-    if(!isWeekend(ds) && !isHoliday(ds)) count++;
+    if(isHoliday(ds)) continue; // public holiday = skip
+    const day = d.getDay();
+    if(day === 0) continue;        // Sunday = skip
+    if(day === 6) count += 0.5;    // Saturday = half day
+    else count += 1;               // Mon–Fri = full day
   }
   return count;
 }
 
 function renderHolidays(){
-  const year = document.getElementById('holiday-year-filter')?.value || '2025';
+  // Populate year options dynamically
+  const ysel = document.getElementById('holiday-year-filter');
+  if(ysel && ysel.options.length === 0){
+    const curYear = new Date().getFullYear();
+    for(let y = curYear - 1; y <= curYear + 2; y++){
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if(y === curYear) opt.selected = true;
+      ysel.appendChild(opt);
+    }
+  }
+  const year = ysel?.value || String(new Date().getFullYear());
   const filtered = allHolidays.filter(h => h.date && h.date.startsWith(year));
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const typeColors = {National:'var(--accent)',Poya:'var(--blue)',Bank:'var(--yellow)',Other:'var(--mid)'};
