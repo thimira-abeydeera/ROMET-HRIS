@@ -333,58 +333,72 @@ tr:hover td{background:#fafffe;}
         <div class="section-hdr"><div><div class="section-title">Apply for Leave</div><div class="section-sub">Submit a leave request</div></div></div>
         <div class="form-grid">
           <div class="form-card">
-            <div class="fc-title">Select Leave Type</div>
-            <div class="ltype-grid">
+            <div class="fc-title">Step 1 — Select Leave Type</div>
+            <div class="ltype-grid" style="margin-bottom:18px;">
               <div class="ltype-btn" onclick="selLType('Annual')" id="lt-Annual"><div class="li">🌴</div>Annual</div>
               <div class="ltype-btn" onclick="selLType('Casual')" id="lt-Casual"><div class="li">🏠</div>Casual</div>
               <div class="ltype-btn" onclick="selLType('Medical')" id="lt-Medical"><div class="li">🏥</div>Medical</div>
               <div class="ltype-btn" onclick="selLType('Short')" id="lt-Short"><div class="li">⏱</div>Short</div>
               <div class="ltype-btn" onclick="selLType('Duty')" id="lt-Duty" style="border-color:var(--blue);color:var(--blue);"><div class="li">🎖️</div>Duty</div>
             </div>
-            <div class="days-row" id="date-range-wrap" style="margin-bottom:12px;">
-              <div class="field" style="flex:1;margin-bottom:0"><label>From Date</label><input type="date" id="a-from" onchange="calcADays()" /></div>
-              <div class="field" style="flex:1;margin-bottom:0"><label>To Date</label><input type="date" id="a-to" onchange="calcADays()" /></div>
-              <div class="days-badge" id="a-days-badge">—</div>
-            </div>
-            <!-- SHORT LEAVE TIME SLOTS -->
-            <div id="shorttime-wrap" style="display:none;margin-bottom:12px;">
-              <div class="field" style="margin-bottom:8px;"><label>Date</label><input type="date" id="a-short-date" onchange="document.getElementById('a-from').value=this.value;document.getElementById('a-to').value=this.value;" /></div>
-              <div style="font-size:12px;font-weight:600;color:var(--mid);margin-bottom:8px;">Select Time Slot</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div id="st-morning" onclick="selShortTime('morning')" style="border:1.5px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
-                  🌅 Morning<div style="font-size:11px;font-weight:400;margin-top:3px;color:inherit;">8:00am – 9:30am</div>
-                </div>
-                <div id="st-evening" onclick="selShortTime('evening')" style="border:1.5px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
-                  🌇 Evening<div style="font-size:11px;font-weight:400;margin-top:3px;color:inherit;">3:30pm – 5:00pm</div>
+
+            <!-- STEP 2: shown after leave type selected -->
+            <div id="apply-step2" style="display:none;">
+
+              <!-- DATE SECTION (hidden for Short) -->
+              <div id="date-section" style="margin-bottom:14px;">
+                <div class="fc-title" style="margin-bottom:10px;">Step 2 — Select Dates</div>
+                <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                  <div class="field" style="flex:1;min-width:120px;margin-bottom:0"><label>From Date</label><input type="date" id="a-from" onchange="calcADays()" /></div>
+                  <div class="field" id="a-to-wrap" style="flex:1;min-width:120px;margin-bottom:0"><label>To Date</label><input type="date" id="a-to" onchange="calcADays()" /></div>
+                  <div class="days-badge" id="a-days-badge" style="margin-bottom:2px;">—</div>
                 </div>
               </div>
-              <div class="days-badge" id="a-days-badge-short" style="margin-top:8px;width:100%;text-align:center;font-size:12px;"></div>
-            </div>
-            <!-- HALF DAY SELECTOR - shows only for Annual/Casual -->
-            <div id="halfday-wrap" style="display:none;margin-bottom:12px;">
-              <div style="font-size:12px;font-weight:600;color:var(--mid);margin-bottom:8px;">Half Day Option</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                <div class="halfday-btn active" id="hd-full" onclick="selHalfDay('full')" style="border:1.5px solid var(--accent);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--accent);color:white;font-size:12px;font-weight:600;transition:all .18s;">
-                  📅 Full Day
-                </div>
-                <div class="halfday-btn" id="hd-first" onclick="selHalfDay('first')" style="border:1.5px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
-                  🌅 First Half<div style="font-size:10px;font-weight:400;margin-top:2px;">8am – 12pm</div>
-                </div>
-                <div class="halfday-btn" id="hd-second" onclick="selHalfDay('second')" style="border:1.5px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
-                  🌇 Second Half<div style="font-size:10px;font-weight:400;margin-top:2px;">12pm – 5pm</div>
+
+              <!-- HALF DAY (for Annual, Casual, Medical, Duty) -->
+              <div id="halfday-section" style="display:none;margin-bottom:14px;">
+                <div class="fc-title" style="margin-bottom:8px;">Step 3 — Full Day or Half Day?</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                  <div id="hd-full" onclick="selHalfDay('full')" style="border:2px solid var(--accent);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;background:var(--accent);color:white;font-size:12px;font-weight:700;transition:all .2s;">
+                    📅<div style="margin-top:4px;">Full Day</div>
+                  </div>
+                  <div id="hd-first" onclick="selHalfDay('first')" style="border:2px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:12px;font-weight:600;transition:all .2s;">
+                    🌅<div style="margin-top:4px;">First Half</div><div style="font-size:10px;margin-top:2px;">8am – 12pm</div>
+                  </div>
+                  <div id="hd-second" onclick="selHalfDay('second')" style="border:2px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:12px;font-weight:600;transition:all .2s;">
+                    🌇<div style="margin-top:4px;">Second Half</div><div style="font-size:10px;margin-top:2px;">12pm – 5pm</div>
+                  </div>
                 </div>
               </div>
+
+              <!-- SHORT LEAVE TIME SLOT -->
+              <div id="short-section" style="display:none;margin-bottom:14px;">
+                <div class="fc-title" style="margin-bottom:8px;">Step 2 — Select Date & Time Slot</div>
+                <div class="field" style="margin-bottom:10px;"><label>Date</label><input type="date" id="a-short-date" onchange="calcADays()" /></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                  <div id="st-morning" onclick="selShortTime('morning')" style="border:2px solid var(--accent);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:var(--accent);color:white;font-size:13px;font-weight:700;transition:all .2s;">
+                    🌅<div style="margin-top:5px;">Morning</div><div style="font-size:11px;margin-top:3px;opacity:.85;">8:00am – 9:30am</div>
+                  </div>
+                  <div id="st-evening" onclick="selShortTime('evening')" style="border:2px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:#fff;color:var(--mid);font-size:13px;font-weight:600;transition:all .2s;">
+                    🌇<div style="margin-top:5px;">Evening</div><div style="font-size:11px;margin-top:3px;">3:30pm – 5:00pm</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- REASON -->
+              <div class="field"><label>Reason <span style="color:var(--dim);font-weight:400">(optional)</span></label><textarea id="a-reason" placeholder="Reason for leave…"></textarea></div>
+              <div class="alert" id="a-alert"></div>
             </div>
-            <div class="field"><label>Reason</label><textarea id="a-reason" placeholder="Reason for leave…"></textarea></div>
-            <div class="alert" id="a-alert"></div>
           </div>
+
           <div class="form-card">
             <div class="fc-title">Your Leave Balance</div>
             <div id="apply-bal-grid"></div>
             <div class="fc-title" style="margin-top:14px;border-top:1px solid var(--border2);padding-top:12px;border-bottom:none;margin-bottom:8px;">Entitlement Info</div>
             <div id="apply-ent-info" style="font-size:12px;color:var(--mid);line-height:1.8;"></div>
           </div>
-          <div class="form-card full">
+
+          <div class="form-card full" id="apply-submit-card" style="display:none;">
             <div id="apply-emp-wrap" style="display:none;" class="field">
               <label>Employee (Admin only)</label>
               <select id="a-emp-id" onchange="updateApplyBalance()"></select>
@@ -923,87 +937,86 @@ function renderMyLeave(){
 // APPLY
 // ═══════════════════════════════════════════
 let selLTypeVal=null;
-let halfDayVal='full'; // 'full', 'first', 'second'
-let shortTimeVal='morning'; // 'morning', 'evening'
+let halfDayVal='full';
+let shortTimeVal='morning';
+
 function selShortTime(val){
   shortTimeVal=val;
   ['morning','evening'].forEach(h=>{
-    const el=document.getElementById('st-'+h);
-    if(!el) return;
-    if(h===val){
-      el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)';
-    } else {
-      el.style.background='var(--bg)'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)';
-    }
+    const el=document.getElementById('st-'+h); if(!el) return;
+    if(h===val){ el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)'; el.style.fontWeight='700'; }
+    else { el.style.background='#fff'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)'; el.style.fontWeight='600'; }
   });
-  if(val){
-    const badge=document.getElementById('a-days-badge');
-    badge.textContent=val==='morning'?'8am–9:30am':'3:30pm–5pm';
-    badge.className='days-badge';
-    checkApplyBal();
-  }
+  checkApplyBal();
 }
+
 function selHalfDay(val){
   halfDayVal=val;
   ['full','first','second'].forEach(h=>{
-    const el=document.getElementById('hd-'+h);
-    if(!el) return;
-    if(h===val){
-      el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)';
-    } else {
-      el.style.background='var(--bg)'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)';
-    }
+    const el=document.getElementById('hd-'+h); if(!el) return;
+    if(h===val){ el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)'; el.style.fontWeight='700'; }
+    else { el.style.background='#fff'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)'; el.style.fontWeight='600'; }
   });
-  calcADays();
+  // If half day selected, lock To = From
+  if(val==='first'||val==='second'){
+    const f=document.getElementById('a-from').value;
+    document.getElementById('a-to').value=f;
+    document.getElementById('a-to-wrap').style.opacity='0.4';
+    document.getElementById('a-days-badge').textContent=val==='first'?'½ day AM':'½ day PM';
+    document.getElementById('a-days-badge').className='days-badge';
+  } else {
+    document.getElementById('a-to-wrap').style.opacity='1';
+    calcADays();
+  }
+  checkApplyBal();
 }
+
 function renderApply(){
   const today=new Date().toISOString().split('T')[0];
-  document.getElementById('a-from').value=today;
-  document.getElementById('a-to').value=today;
-  const sd=document.getElementById('a-short-date'); if(sd) sd.value=today;
-  // Reset all state
   selLTypeVal=null; halfDayVal='full'; shortTimeVal='morning';
   document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('halfday-wrap').style.display='none';
-  document.getElementById('shorttime-wrap').style.display='none';
-  document.getElementById('date-range-wrap').style.display='flex';
-  document.getElementById('a-days-badge').textContent='—';
-  document.getElementById('a-alert').className='alert';
-  // Reset half-day buttons visually
-  selHalfDay('full');
-  calcADays();
+  document.getElementById('apply-step2').style.display='none';
+  document.getElementById('apply-submit-card').style.display='none';
+  const badge=document.getElementById('a-days-badge'); if(badge) badge.textContent='—';
+  const al=document.getElementById('a-alert'); if(al) al.className='alert';
+  const af=document.getElementById('a-from'); if(af) af.value=today;
+  const at=document.getElementById('a-to'); if(at) at.value=today;
+  const sd=document.getElementById('a-short-date'); if(sd) sd.value=today;
   updateApplyBalance();
   const isAdmin=currentUser.role==='admin';
   document.getElementById('apply-emp-wrap').style.display=isAdmin?'block':'none';
   if(isAdmin){
-    const emps=Object.values(allUsers);
-    document.getElementById('a-emp-id').innerHTML=emps.map(u=>`<option value="${u.id}">${u.name} (EPF: ${u.epf})</option>`).join('');
+    document.getElementById('a-emp-id').innerHTML=Object.values(allUsers).map(u=>`<option value="${u.id}">${u.name} (EPF: ${u.epf})</option>`).join('');
   }
 }
+
 function getApplyUser(){ return currentUser.role==='admin'?allUsers[document.getElementById('a-emp-id')?.value]||currentUser:currentUser; }
+
 function selLType(t){
   selLTypeVal=t;
+  halfDayVal='full'; shortTimeVal='morning';
   document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('lt-'+t).classList.add('active');
-  const hdWrap=document.getElementById('halfday-wrap');
-  const stWrap=document.getElementById('shorttime-wrap');
-  const dateWrap=document.getElementById('date-range-wrap');
+
+  // Show step 2 and submit
+  document.getElementById('apply-step2').style.display='block';
+  document.getElementById('apply-submit-card').style.display='block';
+
   if(t==='Short'){
-    hdWrap.style.display='none';
-    stWrap.style.display='block';
-    dateWrap.style.display='none';
-    halfDayVal='full';
-    selHalfDay('full');
+    document.getElementById('date-section').style.display='none';
+    document.getElementById('halfday-section').style.display='none';
+    document.getElementById('short-section').style.display='block';
+    // Reset short time buttons
     selShortTime('morning');
   } else {
-    hdWrap.style.display='block';
-    stWrap.style.display='none';
-    dateWrap.style.display='flex';
-    shortTimeVal=null;
-    // Keep existing half day selection or default to full
-    if(!halfDayVal||halfDayVal==='full') selHalfDay('full');
+    document.getElementById('date-section').style.display='block';
+    document.getElementById('halfday-section').style.display='block';
+    document.getElementById('short-section').style.display='none';
+    // Reset to full day
+    selHalfDay('full');
+    document.getElementById('a-to-wrap').style.opacity='1';
+    calcADays();
   }
-  calcADays();
   checkApplyBal();
 }
 function updateApplyBalance(){
@@ -1021,19 +1034,23 @@ function updateApplyBalance(){
   checkApplyBal();
 }
 function calcADays(){
-  if(selLTypeVal==='Short') return; // handled by selShortTime
-  const f=document.getElementById('a-from').value, t=document.getElementById('a-to').value, badge=document.getElementById('a-days-badge');
-  if(f&&t){
-    let days=Math.round((new Date(t)-new Date(f))/86400000)+1;
-    if(days<1){badge.textContent='!';badge.className='days-badge err';return;}
-    if(halfDayVal==='first'||halfDayVal==='second'){
-      document.getElementById('a-to').value=f;
-      badge.textContent=halfDayVal==='first'?'½ day (AM)':'½ day (PM)'; badge.className='days-badge';
-    } else {
-      badge.textContent=days+(days===1?' day':' days'); badge.className='days-badge';
-    }
-    checkApplyBal();
+  if(selLTypeVal==='Short'){
+    // sync short date to from/to
+    const sd=document.getElementById('a-short-date');
+    if(sd&&sd.value){ document.getElementById('a-from').value=sd.value; document.getElementById('a-to').value=sd.value; }
+    return;
   }
+  const f=document.getElementById('a-from').value, t=document.getElementById('a-to').value, badge=document.getElementById('a-days-badge');
+  if(!f||!t) return;
+  if(halfDayVal==='first'||halfDayVal==='second'){
+    document.getElementById('a-to').value=f;
+    badge.textContent=halfDayVal==='first'?'½ day AM':'½ day PM'; badge.className='days-badge';
+    checkApplyBal(); return;
+  }
+  const days=Math.round((new Date(t)-new Date(f))/86400000)+1;
+  if(days<1){badge.textContent='!';badge.className='days-badge err';return;}
+  badge.textContent=days+(days===1?' day':' days'); badge.className='days-badge';
+  checkApplyBal();
 }
 function getADays(){
   if(selLTypeVal==='Short') return 1; // 1 session
@@ -1051,18 +1068,7 @@ function checkApplyBal(){
   else al.className='alert';
 }
 function clearApplyForm(){
-  selLTypeVal=null; halfDayVal='full'; shortTimeVal='morning';
-  document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('halfday-wrap').style.display='none';
-  document.getElementById('shorttime-wrap').style.display='none';
-  document.getElementById('date-range-wrap').style.display='flex';
-  selHalfDay('full');
-  selShortTime(null);
-  document.getElementById('a-reason').value=''; document.getElementById('a-days-badge').textContent='—';
-  document.getElementById('a-alert').className='alert';
-  const today=new Date().toISOString().split('T')[0];
-  document.getElementById('a-from').value=today; document.getElementById('a-to').value=today;
-  const sd=document.getElementById('a-short-date'); if(sd) sd.value=today;
+  renderApply();
 }
 async function submitLeave(){
   const u=getApplyUser(); if(!u){toast('Select employee','t-err');return;}
