@@ -489,8 +489,14 @@ tr:hover td{background:#fafffe;}
       <div class="view" id="view-employees">
         <div class="section-hdr">
           <div><div class="section-title">Employee Management</div></div>
-          <button class="btn btn-primary" onclick="openEmpModal()">+ Add Employee</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline" onclick="document.getElementById('bulk-upload-input').click()">📤 Bulk Upload Excel</button>
+            <input type="file" id="bulk-upload-input" accept=".xlsx,.xls" style="display:none" onchange="bulkUploadEmployees(this)" />
+            <button class="btn btn-outline btn-sm" onclick="downloadBulkTemplate()" title="Download template">⬇ Template</button>
+            <button class="btn btn-primary" onclick="openEmpModal()">+ Add Employee</button>
+          </div>
         </div>
+        <div id="bulk-upload-result" style="display:none;margin-bottom:14px;"></div>
         <div class="table-card">
           <div class="table-head"><input class="search-bar" placeholder="🔍 Search…" oninput="filterEmps()" id="emp-search" /></div>
           <table><thead><tr><th>EPF</th><th>Name</th><th>Dept</th><th>Designation</th><th>Joined</th><th>Reporting To</th><th>Role</th><th>Annual Ent.</th><th>Actions</th></tr></thead>
@@ -524,6 +530,26 @@ tr:hover td{background:#fafffe;}
         </div>
       </div>
 
+      <!-- HOLIDAYS -->
+      <div class="view" id="view-holidays">
+        <div class="section-hdr">
+          <div><div class="section-title">Public Holidays</div><div class="section-sub">Sri Lanka public holidays — excluded from leave day counts</div></div>
+          <button class="btn btn-primary" onclick="openHolidayModal()">+ Add Holiday</button>
+        </div>
+        <div class="table-card">
+          <div class="table-head">
+            <div class="table-head-title">📅 Holiday Calendar</div>
+            <select class="filter-sel" id="holiday-year-filter" onchange="renderHolidays()">
+              <option value="2024">2024</option>
+              <option value="2025" selected>2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </div>
+          <table><thead><tr><th>Date</th><th>Day</th><th>Holiday Name</th><th>Type</th><th>Actions</th></tr></thead>
+          <tbody id="holiday-body"></tbody></table>
+        </div>
+      </div>
+
       <!-- SETTINGS -->
       <div class="view" id="view-settings">
         <div class="section-hdr"><div><div class="section-title">Settings</div></div></div>
@@ -546,6 +572,29 @@ tr:hover td{background:#fafffe;}
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- Holiday Modal -->
+<div class="overlay" id="holiday-modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title" id="hm-title">Add Public Holiday</div>
+    <input type="hidden" id="hm-id" />
+    <div class="field" style="margin-top:14px;"><label>Date *</label><input type="date" id="hm-date" /></div>
+    <div class="field"><label>Holiday Name *</label><input type="text" id="hm-name" placeholder="e.g. Sinhala & Tamil New Year" /></div>
+    <div class="field"><label>Type</label>
+      <select id="hm-type">
+        <option value="National">National Holiday</option>
+        <option value="Poya">Poya Day</option>
+        <option value="Bank">Bank Holiday</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="alert" id="hm-alert"></div>
+    <div style="display:flex;gap:10px;margin-top:6px;">
+      <button class="btn btn-primary" onclick="saveHoliday()">Save Holiday</button>
+      <button class="btn btn-outline" onclick="closeHolidayModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -663,6 +712,7 @@ async function init(){
   showLoading('Connecting to database…');
   try {
     // Load settings
+    await loadHolidays();
     const sArr = await sbGet('settings','id=eq.1');
     if(sArr && sArr.length) settings = sArr[0];
 
@@ -777,7 +827,7 @@ function setupSidebar(){
   const isCEO = currentUser.role==='reporting';
   const isEmp = currentUser.role==='employee';
   let items = [];
-  if(isAdmin) items=[{icon:'📊',label:'Dashboard',view:'dashboard'},{icon:'📋',label:'Leave Requests',view:'requests',count:pending},{icon:'👥',label:'Employees',view:'employees'},{icon:'📈',label:'Reports',view:'reports'},{icon:'⚙️',label:'Settings',view:'settings'}];
+  if(isAdmin) items=[{icon:'📊',label:'Dashboard',view:'dashboard'},{icon:'📋',label:'Leave Requests',view:'requests',count:pending},{icon:'👥',label:'Employees',view:'employees'},{icon:'📅',label:'Holidays',view:'holidays'},{icon:'📈',label:'Reports',view:'reports'},{icon:'⚙️',label:'Settings',view:'settings'}];
   else if(isCEO) items=[
     {icon:'📊',label:'Dashboard',view:'dashboard'},
     {icon:'🌿',label:'My Leave',view:'my-leave'},
@@ -802,7 +852,7 @@ async function showView(v){
   document.querySelectorAll('.sb-item').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+v)?.classList.add('active');
   document.getElementById('sb-'+v)?.classList.add('active');
-  const titles={dashboard:'Dashboard','my-leave':'My Leave',apply:'Apply for Leave',requests:'Leave Requests',employees:'Employees',reports:'Reports',settings:'Settings'};
+  const titles={dashboard:'Dashboard','my-leave':'My Leave',apply:'Apply for Leave',requests:'Leave Requests',employees:'Employees',holidays:'Public Holidays',reports:'Reports',settings:'Settings'};
   document.getElementById('topbar-title').textContent = titles[v]||v;
   // Show export only for admin
   const expBtn=document.getElementById('topbar-export-btn');
@@ -816,6 +866,7 @@ async function showView(v){
   if(v==='requests') renderRequests();
   if(v==='employees') renderEmployees();
   if(v==='reports') renderReports();
+  if(v==='holidays') renderHolidays();
   if(v==='settings') renderSettings();
   closeNotif();
   setupSidebar();
@@ -1188,8 +1239,8 @@ function calcADays(){
     badge.textContent=halfDayVal==='first'?'½ day AM':'½ day PM'; badge.className='days-badge';
     checkApplyBal(); return;
   }
-  const days=Math.round((new Date(t)-new Date(f))/86400000)+1;
-  if(days<1){badge.textContent='!';badge.className='days-badge err';return;}
+  const days=countWorkingDays(f,t);
+  if(days<1){badge.textContent='0 working days';badge.className='days-badge err';return;}
   badge.textContent=days+(days===1?' day':' days'); badge.className='days-badge';
   checkApplyBal();
 }
@@ -1198,7 +1249,7 @@ function getADays(){
   const f=document.getElementById('a-from').value,t=document.getElementById('a-to').value;
   if(!f||!t) return 0;
   if(halfDayVal==='first'||halfDayVal==='second') return 0.5;
-  return Math.round((new Date(t)-new Date(f))/86400000)+1;
+  return countWorkingDays(f,t);
 }
 function checkApplyBal(){
   const al=document.getElementById('a-alert'); if(!selLTypeVal){al.className='alert';return;}
@@ -1488,6 +1539,220 @@ function exportExcel(){
 }
 
 // ═══════════════════════════════════════════
+// PUBLIC HOLIDAYS
+// ═══════════════════════════════════════════
+let allHolidays = [];
+
+const SL_DEFAULT_HOLIDAYS_2025 = [
+  {date:'2025-01-14',name:"Thai Pongal",type:"National"},
+  {date:'2025-01-15',name:"Duruthu Full Moon Poya",type:"Poya"},
+  {date:'2025-02-04',name:"National Day",type:"National"},
+  {date:'2025-02-12',name:"Navam Full Moon Poya",type:"Poya"},
+  {date:'2025-02-26',name:"Maha Sivarathri",type:"National"},
+  {date:'2025-03-13',name:"Medin Full Moon Poya",type:"Poya"},
+  {date:'2025-03-31',name:"Id-ul-Fitr (Ramazan)",type:"National"},
+  {date:'2025-04-13',name:"Bak Full Moon Poya",type:"Poya"},
+  {date:'2025-04-14',name:"Sinhala & Tamil New Year Eve",type:"National"},
+  {date:'2025-04-18',name:"Good Friday",type:"National"},
+  {date:'2025-05-01',name:"Labour Day",type:"National"},
+  {date:'2025-05-12',name:"Vesak Full Moon Poya",type:"Poya"},
+  {date:'2025-05-13',name:"Day following Vesak",type:"National"},
+  {date:'2025-06-07',name:"Id-ul-Alha (Hadji)",type:"National"},
+  {date:'2025-06-11',name:"Poson Full Moon Poya",type:"Poya"},
+  {date:'2025-07-10',name:"Esala Full Moon Poya",type:"Poya"},
+  {date:'2025-08-08',name:"Nikini Full Moon Poya",type:"Poya"},
+  {date:'2025-09-05',name:"Milad-un-Nabi",type:"National"},
+  {date:'2025-09-07',name:"Binara Full Moon Poya",type:"Poya"},
+  {date:'2025-10-06',name:"Vap Full Moon Poya",type:"Poya"},
+  {date:'2025-10-20',name:"Deepavali",type:"National"},
+  {date:'2025-11-05',name:"Il Full Moon Poya",type:"Poya"},
+  {date:'2025-12-04',name:"Unduvap Full Moon Poya",type:"Poya"},
+  {date:'2025-12-25',name:"Christmas Day",type:"National"},
+];
+
+async function loadHolidays(){
+  try {
+    const h = await sbGet('holidays','order=date.asc');
+    allHolidays = h || [];
+    // Seed defaults if empty
+    if(allHolidays.length === 0){
+      for(const h of SL_DEFAULT_HOLIDAYS_2025){
+        await sbPost('holidays', h);
+      }
+      allHolidays = await sbGet('holidays','order=date.asc') || [];
+    }
+  } catch(e){ allHolidays = []; }
+}
+
+function isHoliday(dateStr){
+  return allHolidays.some(h => h.date === dateStr);
+}
+
+function isWeekend(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.getDay() === 0 || d.getDay() === 6;
+}
+
+function countWorkingDays(from, to){
+  // Count days excluding weekends and public holidays
+  let count = 0;
+  const start = new Date(from + 'T00:00:00');
+  const end = new Date(to + 'T00:00:00');
+  for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
+    const ds = d.toISOString().split('T')[0];
+    if(!isWeekend(ds) && !isHoliday(ds)) count++;
+  }
+  return count;
+}
+
+function renderHolidays(){
+  const year = document.getElementById('holiday-year-filter')?.value || '2025';
+  const filtered = allHolidays.filter(h => h.date && h.date.startsWith(year));
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const typeColors = {National:'var(--accent)',Poya:'var(--blue)',Bank:'var(--yellow)',Other:'var(--mid)'};
+  document.getElementById('holiday-body').innerHTML = filtered.length ? filtered.map(h => {
+    const d = new Date(h.date + 'T00:00:00');
+    const dayName = days[d.getDay()];
+    const color = typeColors[h.type] || 'var(--mid)';
+    return `<tr>
+      <td><strong>${fmt(h.date)}</strong></td>
+      <td style="color:var(--mid)">${dayName}</td>
+      <td>${h.name}</td>
+      <td><span class="badge" style="background:${color}22;color:${color};">${h.type||'National'}</span></td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteHoliday(${h.id})">🗑 Delete</button></td>
+    </tr>`;
+  }).join('') : `<tr class="empty-row"><td colspan="5">No holidays for ${year}</td></tr>`;
+}
+
+function openHolidayModal(){ 
+  document.getElementById('hm-date').value='';
+  document.getElementById('hm-name').value='';
+  document.getElementById('hm-type').value='National';
+  document.getElementById('hm-alert').className='alert';
+  document.getElementById('holiday-modal-overlay').style.display='flex';
+}
+function closeHolidayModal(){ document.getElementById('holiday-modal-overlay').style.display='none'; }
+
+async function saveHoliday(){
+  const date=document.getElementById('hm-date').value;
+  const name=document.getElementById('hm-name').value.trim();
+  const type=document.getElementById('hm-type').value;
+  const al=document.getElementById('hm-alert');
+  if(!date||!name){al.className='alert a-err show';al.textContent='Date and name are required.';return;}
+  showLoading('Saving holiday…');
+  try {
+    await sbPost('holidays',{date,name,type});
+    allHolidays = await sbGet('holidays','order=date.asc') || [];
+    closeHolidayModal();
+    renderHolidays();
+    toast('Holiday added! ✓','t-ok');
+  } catch(e){ al.className='alert a-err show'; al.textContent='Error: '+e.message; }
+  hideLoading();
+}
+
+async function deleteHoliday(id){
+  if(!confirm('Delete this holiday?')) return;
+  showLoading('Deleting…');
+  try {
+    await sbDelete('holidays',`id=eq.${id}`);
+    allHolidays = allHolidays.filter(h=>h.id!==id);
+    renderHolidays();
+    toast('Holiday deleted','t-ok');
+  } catch(e){ toast('Error: '+e.message,'t-err'); }
+  hideLoading();
+}
+
+// ═══════════════════════════════════════════
+// BULK EMPLOYEE UPLOAD
+// ═══════════════════════════════════════════
+function downloadBulkTemplate(){
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['name','epf','doj','dept','desig','email','username','password','role','reporting_epf'],
+    ['Mr. A. B. Silva','50','2024-01-15','Finance','Accountant','silva@romet.lk','50','ROMET#123','employee',''],
+    ['Ms. K. Perera','51','2024-03-01','HR','HR Assistant','perera@romet.lk','51','ROMET#123','employee',''],
+  ]);
+  ws['!cols'] = [20,6,12,14,18,22,8,12,10,14].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Employees');
+  XLSX.writeFile(wb, 'Romet_Bulk_Employee_Template.xlsx');
+  toast('Template downloaded!','t-ok');
+}
+
+async function bulkUploadEmployees(input){
+  const file = input.files[0]; if(!file) return;
+  const resultDiv = document.getElementById('bulk-upload-result');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div style="padding:12px;background:#fff;border:1px solid var(--border);border-radius:10px;color:var(--mid);">📊 Reading file…</div>';
+  
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws);
+      
+      if(!rows.length){ resultDiv.innerHTML='<div class="alert a-err show">No data found in file.</div>'; return; }
+      
+      let added=0, skipped=0, errors=[];
+      showLoading(`Uploading ${rows.length} employees…`);
+      
+      for(const row of rows){
+        try {
+          const epf = String(row.epf||'').trim();
+          const name = String(row.name||'').trim();
+          if(!epf||!name){ skipped++; continue; }
+          
+          // Check if already exists
+          const existing = Object.values(allUsers).find(u=>u.epf===epf);
+          if(existing){ skipped++; errors.push(`EPF ${epf} already exists`); continue; }
+          
+          // Find reporting person by EPF
+          let reportingId = '';
+          if(row.reporting_epf){
+            const rep = Object.values(allUsers).find(u=>u.epf===String(row.reporting_epf).trim());
+            if(rep) reportingId = rep.id;
+          }
+          
+          const id = 'epf'+epf;
+          const role = row.role||'employee';
+          await sbPost('users',{
+            id, name, epf,
+            dept: row.dept||'',
+            desig: row.desig||'',
+            email: row.email||'',
+            role,
+            doj: row.doj||new Date().toISOString().split('T')[0],
+            reporting: reportingId,
+            username: row.username||epf,
+            password: row.password||'ROMET#123',
+            used_annual:0, used_casual:0, used_medical:0
+          });
+          added++;
+        } catch(err){ errors.push(`Row error: ${err.message}`); skipped++; }
+      }
+      
+      await refreshData();
+      renderEmployees();
+      hideLoading();
+      input.value = '';
+      
+      const errHtml = errors.length ? `<div style="margin-top:8px;font-size:11px;color:var(--red);">${errors.slice(0,5).join('<br>')}</div>` : '';
+      resultDiv.innerHTML = `<div style="padding:14px 18px;background:#fff;border:1px solid var(--border);border-radius:10px;">
+        <div style="font-weight:700;color:var(--accent);margin-bottom:4px;">✓ Upload Complete</div>
+        <div style="font-size:13px;color:var(--ink);">Added: <strong>${added}</strong> employees &nbsp;·&nbsp; Skipped: <strong>${skipped}</strong></div>
+        ${errHtml}
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('bulk-upload-result').style.display='none'" style="margin-top:8px;">Dismiss</button>
+      </div>`;
+      toast(`${added} employees added!`, 't-ok');
+    } catch(err){ 
+      hideLoading(); 
+      resultDiv.innerHTML = `<div class="alert a-err show">Error reading file: ${err.message}</div>`;
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ═══════════════════════════════════════════
 // CHANGE PASSWORD
 // ═══════════════════════════════════════════
 function openChangePwd(){
@@ -1535,6 +1800,7 @@ function hideLoading(){const o=document.getElementById('loading-overlay');if(o)o
 // Close overlays
 document.getElementById('emp-modal-overlay').addEventListener('click',function(e){if(e.target===this)closeEmpModal();});
 document.getElementById('pwd-modal-overlay').addEventListener('click',function(e){if(e.target===this)closeChangePwd();});
+document.getElementById('holiday-modal-overlay').addEventListener('click',function(e){if(e.target===this)closeHolidayModal();});
 document.getElementById('leave-modal-overlay').addEventListener('click',function(e){if(e.target===this)closeLM();});
 document.addEventListener('click',function(e){if(!e.target.closest('#notif-panel')&&!e.target.closest('#notif-bell'))closeNotif();});
 
