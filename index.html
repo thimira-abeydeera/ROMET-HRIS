@@ -332,21 +332,50 @@ tr:hover td{background:#fafffe;}
           <div id="epf-lookup-result" style="padding:0 18px 18px;"></div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
-          <div class="table-card">
-            <div class="table-head"><div class="table-head-title">Recent Requests</div></div>
-            <table><thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Status</th></tr></thead>
-            <tbody id="dash-recent"></tbody></table>
+        <!-- ADMIN / EMPLOYEE view -->
+        <div id="admin-emp-dash">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <div class="table-card">
+              <div class="table-head"><div class="table-head-title">Recent Requests</div></div>
+              <table><thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Status</th></tr></thead>
+              <tbody id="dash-recent"></tbody></table>
+            </div>
+            <div class="table-card">
+              <div class="table-head"><div class="table-head-title" id="dash-pending-title">Pending Approvals</div></div>
+              <table><thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Action</th></tr></thead>
+              <tbody id="dash-pending"></tbody></table>
+            </div>
           </div>
-          <div class="table-card">
-            <div class="table-head"><div class="table-head-title" id="dash-pending-title">Pending Approvals</div></div>
-            <table><thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Action</th></tr></thead>
-            <tbody id="dash-pending"></tbody></table>
+          <div class="table-card" style="margin-top:18px;" id="audit-card">
+            <div class="table-head"><div class="table-head-title">Audit Trail</div></div>
+            <div style="padding:14px 18px;" id="audit-list"></div>
           </div>
         </div>
-        <div class="table-card" style="margin-top:18px;" id="audit-card">
-          <div class="table-head"><div class="table-head-title">Audit Trail</div></div>
-          <div style="padding:14px 18px;" id="audit-list"></div>
+
+        <!-- REPORTING PERSON dashboard -->
+        <div id="rep-dash" style="display:none;">
+          <!-- Leave balance cards -->
+          <div class="bal-grid" id="rep-bal-grid" style="margin-bottom:18px;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <!-- Pending approvals from team -->
+            <div class="table-card">
+              <div class="table-head"><div class="table-head-title">⏳ Pending Approvals</div></div>
+              <table><thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Action</th></tr></thead>
+              <tbody id="rep-pending-body"></tbody></table>
+            </div>
+            <!-- Recent team requests -->
+            <div class="table-card">
+              <div class="table-head"><div class="table-head-title">📋 Recent Team Requests</div></div>
+              <table><thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Status</th></tr></thead>
+              <tbody id="rep-recent-body"></tbody></table>
+            </div>
+          </div>
+          <!-- Team members -->
+          <div class="table-card" style="margin-top:18px;">
+            <div class="table-head"><div class="table-head-title">👥 My Team</div></div>
+            <table><thead><tr><th>Name</th><th>EPF</th><th>Department</th><th>Designation</th><th>Annual</th><th>Casual</th><th>Medical</th></tr></thead>
+            <tbody id="rep-team-body"></tbody></table>
+          </div>
         </div>
       </div>
 
@@ -919,56 +948,109 @@ async function renderDashboard(){
     epc.style.display='none';
   }
 
-  let statsHtml='';
-  if(isAdmin||isCEO){
-    const total=allRequests.length, pending=allRequests.filter(r=>r.status==='Pending').length;
-    const approved=allRequests.filter(r=>r.status==='Approved').length;
-    const empCount=Object.values(allUsers).filter(u=>u.role==='employee').length;
-    statsHtml=`
-      <div class="stat-card sc-green"><div class="stat-icon">👥</div><div class="stat-label">Employees</div><div class="stat-val">${empCount}</div><div class="stat-sub">Active</div></div>
-      <div class="stat-card sc-yellow"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-val">${pending}</div><div class="stat-sub">Awaiting approval</div></div>
-      <div class="stat-card sc-blue"><div class="stat-icon">✅</div><div class="stat-label">Approved</div><div class="stat-val">${approved}</div><div class="stat-sub">Total</div></div>
-      <div class="stat-card sc-red"><div class="stat-icon">📋</div><div class="stat-label">Total Requests</div><div class="stat-val">${total}</div><div class="stat-sub">All time</div></div>`;
-  } else {
-    const bal=getBalance(currentUser), myReqs=allRequests.filter(r=>r.user_id===currentUser.id);
-    statsHtml=`
+  // Show/hide correct dashboard section
+  document.getElementById('admin-emp-dash').style.display = isCEO ? 'none' : 'block';
+  document.getElementById('rep-dash').style.display = isCEO ? 'block' : 'none';
+  document.getElementById('epf-lookup-card').style.display = isAdmin ? 'block' : 'none';
+
+  if(isCEO){
+    // ── REPORTING PERSON DASHBOARD ──
+    const myReqs = allRequests.filter(r=>r.user_id===currentUser.id);
+    const bal = getBalance(currentUser);
+    const stm = getShortUsedThisMonth(currentUser.id);
+    const teamMembers = Object.values(allUsers).filter(u=>u.reporting===currentUser.id);
+    const teamReqs = allRequests.filter(r=>allUsers[r.user_id]?.reporting===currentUser.id);
+    const pendingTeam = teamReqs.filter(r=>r.status==='Pending');
+
+    // Stats: own leave balance + pending count
+    document.getElementById('dash-stats').innerHTML=`
       <div class="stat-card sc-green"><div class="stat-icon">🌴</div><div class="stat-label">Annual</div><div class="stat-val">${bal.Annual}</div><div class="stat-sub">days remaining</div></div>
       <div class="stat-card sc-blue"><div class="stat-icon">🏠</div><div class="stat-label">Casual</div><div class="stat-val">${typeof bal.Casual==='number'&&bal.Casual%1?bal.Casual.toFixed(1):bal.Casual}</div><div class="stat-sub">days remaining</div></div>
       <div class="stat-card sc-red"><div class="stat-icon">🏥</div><div class="stat-label">Medical</div><div class="stat-val">${bal.Medical}</div><div class="stat-sub">days remaining</div></div>
-      <div class="stat-card sc-yellow"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-val">${myReqs.filter(r=>r.status==='Pending').length}</div><div class="stat-sub">Awaiting approval</div></div>`;
-  }
-  document.getElementById('dash-stats').innerHTML = statsHtml;
+      <div class="stat-card sc-yellow"><div class="stat-icon">⏳</div><div class="stat-label">Pending Approvals</div><div class="stat-val">${pendingTeam.length}</div><div class="stat-sub">from your team</div></div>`;
 
-  const recent=(isEmp?allRequests.filter(r=>r.user_id===currentUser.id):allRequests).slice(0,5);
-  const rb=document.getElementById('dash-recent');
-  rb.innerHTML=recent.length?recent.map(r=>{
-    const u=allUsers[r.user_id];
-    return `<tr><td><strong>${u?u.name.split(' ').slice(-1)[0]:r.user_id}</strong></td><td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td><td>${r.days}</td><td><span class="badge b-${r.status.toLowerCase()}">${r.status}</span></td></tr>`;
-  }).join(''):`<tr class="empty-row"><td colspan="4">No requests yet</td></tr>`;
+    // Own leave balance cards
+    const types=['Annual','Casual','Medical','Short','Duty'], icons=['🌴','🏠','🏥','⏱','🎖️'];
+    document.getElementById('rep-bal-grid').innerHTML=types.map((t,i)=>{
+      if(t==='Duty') return `<div class="bal-card" style="border-color:#c7d9fc;"><div class="bc-type">🎖️ Duty</div><div class="bc-num" style="color:var(--blue);">∞</div><div class="bc-of">No limit</div><div class="bc-bar"><div class="bc-fill" style="width:100%;background:var(--blue);opacity:.3;"></div></div></div>`;
+      if(t==='Short') return `<div class="bal-card${stm>=2?' low':''}"><div class="bc-type">⏱ Short</div><div class="bc-num">${2-stm}</div><div class="bc-of">of 2 this month</div><div class="bc-bar"><div class="bc-fill" style="width:${Math.max(0,(1-stm/2)*100)}%"></div></div></div>`;
+      const ent=getEntitlements(currentUser); const pct=ent[t]>0?(bal[t]/ent[t])*100:0;
+      return `<div class="bal-card${typeof bal[t]==='number'&&bal[t]<=1?' low':''}"><div class="bc-type">${icons[i]} ${t}</div><div class="bc-num">${typeof bal[t]==='number'&&bal[t]%1?bal[t].toFixed(1):bal[t]}</div><div class="bc-of">of ${typeof ent[t]==='number'&&ent[t]%1?ent[t].toFixed(1):ent[t]} days</div><div class="bc-bar"><div class="bc-fill" style="width:${pct}%"></div></div></div>`;
+    }).join('');
 
-  let approvals=[];
-  if(isCEO) approvals=allRequests.filter(r=>r.status==='Pending'&&allUsers[r.user_id]?.reporting===currentUser.id);
-  else if(isAdmin) approvals=allRequests.filter(r=>r.status==='Pending');
-  document.getElementById('dash-pending-title').textContent = isEmp?'Upcoming Leave':'Pending Approvals';
-  const pb=document.getElementById('dash-pending');
-  if(isEmp){
-    const upcoming=allRequests.filter(r=>r.user_id===currentUser.id&&r.status==='Approved'&&new Date(r.from_date)>=new Date()).slice(0,4);
-    pb.innerHTML=upcoming.length?upcoming.map(r=>`<tr><td></td><td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td><td>${r.days}</td><td>${fmt(r.from_date)}</td></tr>`).join(''):`<tr class="empty-row"><td colspan="4">No upcoming leave</td></tr>`;
-  } else {
-    pb.innerHTML=approvals.length?approvals.map(r=>{
+    // Pending approvals
+    document.getElementById('rep-pending-body').innerHTML = pendingTeam.length ? pendingTeam.map(r=>{
       const u=allUsers[r.user_id];
       return `<tr><td><strong>${u?u.name.split(' ').slice(-1)[0]:r.user_id}</strong></td><td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td><td>${r.days}</td>
         <td><button class="btn btn-sm btn-success" onclick="quickAction(${r.id},'Approved')">✓</button> <button class="btn btn-sm btn-danger" onclick="quickAction(${r.id},'Rejected')">✕</button></td></tr>`;
-    }).join(''):`<tr class="empty-row"><td colspan="4">No pending approvals 🎉</td></tr>`;
-  }
+    }).join('') : `<tr class="empty-row"><td colspan="4">No pending approvals 🎉</td></tr>`;
 
-  if(isAdmin){
-    const audit = await sbGet('audit','order=created_at.desc&limit=8');
-    document.getElementById('audit-list').innerHTML=(audit||[]).map(a=>`
-      <div class="audit-item"><div class="audit-dot"></div>
-        <div><div class="audit-action">${a.action}</div>
-        <div class="audit-meta">by ${allUsers[a.user_id]?.name||a.user_id} · ${fmtTs(a.created_at)}</div></div>
-      </div>`).join('')||'<div style="color:var(--dim);font-size:12px;">No audit records</div>';
+    // Recent team requests
+    document.getElementById('rep-recent-body').innerHTML = teamReqs.slice(0,6).map(r=>{
+      const u=allUsers[r.user_id];
+      return `<tr><td><strong>${u?u.name.split(' ').slice(-1)[0]:r.user_id}</strong></td><td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td><td>${r.days}</td><td><span class="badge b-${r.status.toLowerCase()}">${r.status}</span></td></tr>`;
+    }).join('') || `<tr class="empty-row"><td colspan="4">No team requests yet</td></tr>`;
+
+    // Team members with balances
+    document.getElementById('rep-team-body').innerHTML = teamMembers.length ? teamMembers.map(u=>{
+      const b=getBalance(u);
+      return `<tr><td><strong>${u.name}</strong></td><td style="color:var(--dim)">${u.epf}</td><td>${u.dept||'—'}</td><td>${u.desig||'—'}</td>
+        <td><span style="color:${b.Annual<=2?'var(--red)':'var(--accent)'};font-weight:600;">${b.Annual}</span></td>
+        <td><span style="color:${b.Casual<=1?'var(--red)':'var(--accent)'};font-weight:600;">${typeof b.Casual==='number'&&b.Casual%1?b.Casual.toFixed(1):b.Casual}</span></td>
+        <td><span style="color:${b.Medical<=1?'var(--red)':'var(--accent)'};font-weight:600;">${b.Medical}</span></td></tr>`;
+    }).join('') : `<tr class="empty-row"><td colspan="7">No team members assigned</td></tr>`;
+
+  } else {
+    // ── ADMIN / EMPLOYEE DASHBOARD ──
+    let statsHtml='';
+    if(isAdmin){
+      const total=allRequests.length, pending=allRequests.filter(r=>r.status==='Pending').length;
+      const approved=allRequests.filter(r=>r.status==='Approved').length;
+      const empCount=Object.values(allUsers).filter(u=>u.role==='employee').length;
+      statsHtml=`
+        <div class="stat-card sc-green"><div class="stat-icon">👥</div><div class="stat-label">Employees</div><div class="stat-val">${empCount}</div><div class="stat-sub">Active</div></div>
+        <div class="stat-card sc-yellow"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-val">${pending}</div><div class="stat-sub">Awaiting approval</div></div>
+        <div class="stat-card sc-blue"><div class="stat-icon">✅</div><div class="stat-label">Approved</div><div class="stat-val">${approved}</div><div class="stat-sub">Total</div></div>
+        <div class="stat-card sc-red"><div class="stat-icon">📋</div><div class="stat-label">Total Requests</div><div class="stat-val">${total}</div><div class="stat-sub">All time</div></div>`;
+    } else {
+      const bal=getBalance(currentUser), myReqs=allRequests.filter(r=>r.user_id===currentUser.id);
+      statsHtml=`
+        <div class="stat-card sc-green"><div class="stat-icon">🌴</div><div class="stat-label">Annual</div><div class="stat-val">${bal.Annual}</div><div class="stat-sub">days remaining</div></div>
+        <div class="stat-card sc-blue"><div class="stat-icon">🏠</div><div class="stat-label">Casual</div><div class="stat-val">${typeof bal.Casual==='number'&&bal.Casual%1?bal.Casual.toFixed(1):bal.Casual}</div><div class="stat-sub">days remaining</div></div>
+        <div class="stat-card sc-red"><div class="stat-icon">🏥</div><div class="stat-label">Medical</div><div class="stat-val">${bal.Medical}</div><div class="stat-sub">days remaining</div></div>
+        <div class="stat-card sc-yellow"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-val">${myReqs.filter(r=>r.status==='Pending').length}</div><div class="stat-sub">Awaiting approval</div></div>`;
+    }
+    document.getElementById('dash-stats').innerHTML = statsHtml;
+
+    const recent=(isEmp?allRequests.filter(r=>r.user_id===currentUser.id):allRequests).slice(0,5);
+    const rb=document.getElementById('dash-recent');
+    rb.innerHTML=recent.length?recent.map(r=>{
+      const u=allUsers[r.user_id];
+      return `<tr><td><strong>${u?u.name.split(' ').slice(-1)[0]:r.user_id}</strong></td><td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td><td>${r.days}</td><td><span class="badge b-${r.status.toLowerCase()}">${r.status}</span></td></tr>`;
+    }).join(''):`<tr class="empty-row"><td colspan="4">No requests yet</td></tr>`;
+
+    let approvals = isAdmin ? allRequests.filter(r=>r.status==='Pending') : [];
+    document.getElementById('dash-pending-title').textContent = isEmp?'Upcoming Leave':'Pending Approvals';
+    const pb=document.getElementById('dash-pending');
+    if(isEmp){
+      const upcoming=allRequests.filter(r=>r.user_id===currentUser.id&&r.status==='Approved'&&new Date(r.from_date)>=new Date()).slice(0,4);
+      pb.innerHTML=upcoming.length?upcoming.map(r=>`<tr><td></td><td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td><td>${r.days}</td><td>${fmt(r.from_date)}</td></tr>`).join(''):`<tr class="empty-row"><td colspan="4">No upcoming leave</td></tr>`;
+    } else {
+      pb.innerHTML=approvals.length?approvals.map(r=>{
+        const u=allUsers[r.user_id];
+        return `<tr><td><strong>${u?u.name.split(' ').slice(-1)[0]:r.user_id}</strong></td><td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td><td>${r.days}</td>
+          <td><button class="btn btn-sm btn-success" onclick="quickAction(${r.id},'Approved')">✓</button> <button class="btn btn-sm btn-danger" onclick="quickAction(${r.id},'Rejected')">✕</button></td></tr>`;
+      }).join(''):`<tr class="empty-row"><td colspan="4">No pending approvals 🎉</td></tr>`;
+    }
+
+    if(isAdmin){
+      const audit = await sbGet('audit','order=created_at.desc&limit=8');
+      document.getElementById('audit-list').innerHTML=(audit||[]).map(a=>`
+        <div class="audit-item"><div class="audit-dot"></div>
+          <div><div class="audit-action">${a.action}</div>
+          <div class="audit-meta">by ${allUsers[a.user_id]?.name||a.user_id} · ${fmtTs(a.created_at)}</div></div>
+        </div>`).join('')||'<div style="color:var(--dim);font-size:12px;">No audit records</div>';
+    }
   }
 }
 
