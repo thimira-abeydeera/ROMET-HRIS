@@ -285,6 +285,38 @@ tr:hover td{background:#fafffe;}
           <div><div class="section-title">Dashboard</div><div class="section-sub">Welcome, <span id="dash-welcome"></span></div></div>
           <button class="btn btn-primary" id="dash-apply-btn" onclick="showView('apply')" style="display:none">+ Apply for Leave</button>
         </div>
+        <!-- EMPLOYEE PROFILE CARD (employees only) -->
+        <div id="emp-profile-card" style="display:none;background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin-bottom:20px;box-shadow:var(--shadow);">
+          <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+            <div id="epc-avatar" style="width:60px;height:60px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:200px;">
+              <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ink);" id="epc-name"></div>
+              <div style="font-size:12px;color:var(--mid);margin-top:3px;" id="epc-desig"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;flex:2;min-width:280px;">
+              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">EPF Number</div>
+                <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px;" id="epc-epf"></div>
+              </div>
+              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Department</div>
+                <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px;" id="epc-dept"></div>
+              </div>
+              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Joined</div>
+                <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px;" id="epc-doj"></div>
+              </div>
+              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Annual Entitlement</div>
+                <div style="font-size:15px;font-weight:700;color:var(--accent);margin-top:3px;" id="epc-ent"></div>
+              </div>
+              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Reporting Person</div>
+                <div style="font-size:14px;font-weight:600;color:var(--blue);margin-top:3px;" id="epc-reporting"></div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="stats-grid" id="dash-stats"></div>
 
         <!-- EPF LOOKUP (admin/reporting) -->
@@ -841,6 +873,24 @@ async function renderDashboard(){
   document.getElementById('dash-apply-btn').style.display = isEmp?'':'none';
   document.getElementById('epf-lookup-card').style.display = (isAdmin||isCEO)?'block':'none';
   document.getElementById('audit-card').style.display = isAdmin?'block':'none';
+  // Employee profile card
+  const epc=document.getElementById('emp-profile-card');
+  if(isEmp){
+    const u=currentUser, ent=getEntitlements(u);
+    const initials=u.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('epc-avatar').textContent=initials;
+    document.getElementById('epc-name').textContent=u.name;
+    document.getElementById('epc-desig').textContent=u.desig||u.dept||'Employee';
+    document.getElementById('epc-epf').textContent=u.epf||'—';
+    document.getElementById('epc-dept').textContent=u.dept||'—';
+    document.getElementById('epc-doj').textContent=u.doj?fmt(u.doj):'—';
+    document.getElementById('epc-ent').textContent=ent.Annual+' days';
+    const rep=u.reporting?allUsers[u.reporting]:null;
+    document.getElementById('epc-reporting').textContent=rep?rep.name:'—';
+    epc.style.display='block';
+  } else {
+    epc.style.display='none';
+  }
 
   let statsHtml='';
   if(isAdmin||isCEO){
