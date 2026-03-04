@@ -266,7 +266,7 @@ tr:hover td{background:#fafffe;}
 
   <div class="main-content">
     <div class="topbar">
-      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-title" id="topbar-title"></div>
       <div style="display:flex;gap:10px;align-items:center;">
         <div class="notif-bell" onclick="toggleNotif()" id="notif-bell">🔔<div class="notif-dot" id="notif-dot"></div></div>
         <button class="btn btn-outline btn-sm" onclick="exportExcel()">⬇ Export</button>
@@ -282,38 +282,36 @@ tr:hover td{background:#fafffe;}
       <!-- DASHBOARD -->
       <div class="view" id="view-dashboard">
         <div class="section-hdr">
-          <div><div class="section-title">Dashboard</div><div class="section-sub">Welcome, <span id="dash-welcome"></span></div></div>
-          <button class="btn btn-primary" id="dash-apply-btn" onclick="showView('apply')" style="display:none">+ Apply for Leave</button>
+          <div><div class="section-sub" style="font-size:15px;font-weight:600;">Welcome, <span id="dash-welcome"></span></div></div>
         </div>
-        <!-- EMPLOYEE PROFILE CARD (employees only) -->
-        <div id="emp-profile-card" style="display:none;background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin-bottom:20px;box-shadow:var(--shadow);">
-          <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
-            <div id="epc-avatar" style="width:60px;height:60px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;"></div>
-            <div style="flex:1;min-width:200px;">
-              <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ink);" id="epc-name"></div>
-              <div style="font-size:12px;color:var(--mid);margin-top:3px;" id="epc-desig"></div>
+        <!-- EMPLOYEE PROFILE CARD (employees only) - ID Card Style -->
+        <div id="emp-profile-card" style="display:none;margin-bottom:22px;width:380px;">
+          <div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(30,122,74,.15);border:1px solid var(--border);">
+            <!-- Card Header -->
+            <div style="background:linear-gradient(135deg,#1e7a4a,#2da05e);padding:18px 22px;position:relative;">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.7);margin-bottom:3px;">Romet Holdings Pvt Ltd</div>
+              <div style="font-family:'Playfair Display',serif;font-size:17px;color:#fff;font-weight:700;">Employee Profile</div>
+              <div style="position:absolute;top:14px;right:18px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:17px;">🏢</div>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;flex:2;min-width:280px;">
-              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">EPF Number</div>
-                <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px;" id="epc-epf"></div>
+            <!-- Card Body -->
+            <div style="padding:18px 22px;">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border2);">
+                <div id="epc-avatar" style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#1e7a4a,#2da05e);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;box-shadow:0 4px 12px rgba(30,122,74,.3);"></div>
+                <div>
+                  <div id="epc-name" style="font-size:15px;font-weight:700;color:var(--ink);line-height:1.2;"></div>
+                  <div id="epc-desig" style="font-size:11px;color:var(--mid);margin-top:3px;"></div>
+                </div>
               </div>
-              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Department</div>
-                <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px;" id="epc-dept"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Department</div><div id="epc-dept" style="font-size:13px;font-weight:600;color:var(--ink);margin-top:3px;"></div></div>
+                <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Date Joined</div><div id="epc-doj" style="font-size:13px;font-weight:600;color:var(--ink);margin-top:3px;"></div></div>
+                <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Reporting To</div><div id="epc-reporting" style="font-size:13px;font-weight:600;color:var(--blue);margin-top:3px;"></div></div>
               </div>
-              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Joined</div>
-                <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:3px;" id="epc-doj"></div>
-              </div>
-              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Annual Entitlement</div>
-                <div style="font-size:15px;font-weight:700;color:var(--accent);margin-top:3px;" id="epc-ent"></div>
-              </div>
-              <div style="background:var(--bg);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;">Reporting Person</div>
-                <div style="font-size:14px;font-weight:600;color:var(--blue);margin-top:3px;" id="epc-reporting"></div>
-              </div>
+            </div>
+            <!-- Card Footer -->
+            <div style="background:var(--accent-lt);padding:10px 22px;display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mid);font-weight:600;">EPF Number</div><div id="epc-epf" style="font-size:15px;font-weight:700;color:var(--accent);margin-top:2px;"></div></div>
+              <div style="font-size:11px;font-weight:600;color:var(--accent);background:#fff;border:1px solid var(--border);border-radius:99px;padding:3px 12px;">● Active</div>
             </div>
           </div>
         </div>
@@ -870,7 +868,7 @@ function clearLookup(){ document.getElementById('epf-lookup-input').value=''; do
 async function renderDashboard(){
   document.getElementById('dash-welcome').textContent = currentUser.name.split(' ').slice(-1)[0];
   const isAdmin=currentUser.role==='admin', isCEO=currentUser.role==='reporting', isEmp=currentUser.role==='employee';
-  document.getElementById('dash-apply-btn').style.display = isEmp?'':'none';
+  
   document.getElementById('epf-lookup-card').style.display = (isAdmin||isCEO)?'block':'none';
   document.getElementById('audit-card').style.display = isAdmin?'block':'none';
   // Employee profile card
@@ -884,7 +882,6 @@ async function renderDashboard(){
     document.getElementById('epc-epf').textContent=u.epf||'—';
     document.getElementById('epc-dept').textContent=u.dept||'—';
     document.getElementById('epc-doj').textContent=u.doj?fmt(u.doj):'—';
-    document.getElementById('epc-ent').textContent=ent.Annual+' days';
     const rep=u.reporting?allUsers[u.reporting]:null;
     document.getElementById('epc-reporting').textContent=rep?rep.name:'—';
     epc.style.display='block';
