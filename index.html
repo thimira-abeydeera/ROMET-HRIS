@@ -960,12 +960,23 @@ function renderApply(){
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('a-from').value=today;
   document.getElementById('a-to').value=today;
+  const sd=document.getElementById('a-short-date'); if(sd) sd.value=today;
+  // Reset all state
+  selLTypeVal=null; halfDayVal='full'; shortTimeVal='morning';
+  document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('halfday-wrap').style.display='none';
+  document.getElementById('shorttime-wrap').style.display='none';
+  document.getElementById('date-range-wrap').style.display='flex';
+  document.getElementById('a-days-badge').textContent='—';
+  document.getElementById('a-alert').className='alert';
+  // Reset half-day buttons visually
+  selHalfDay('full');
   calcADays();
   updateApplyBalance();
   const isAdmin=currentUser.role==='admin';
   document.getElementById('apply-emp-wrap').style.display=isAdmin?'block':'none';
   if(isAdmin){
-    const emps=Object.values(allUsers).filter(u=>u.role==='employee');
+    const emps=Object.values(allUsers);
     document.getElementById('a-emp-id').innerHTML=emps.map(u=>`<option value="${u.id}">${u.name} (EPF: ${u.epf})</option>`).join('');
   }
 }
@@ -978,19 +989,21 @@ function selLType(t){
   const stWrap=document.getElementById('shorttime-wrap');
   const dateWrap=document.getElementById('date-range-wrap');
   if(t==='Short'){
-    // Short leave: show time slots, hide date range To, hide half-day
     hdWrap.style.display='none';
     stWrap.style.display='block';
     dateWrap.style.display='none';
+    halfDayVal='full';
     selHalfDay('full');
-    selShortTime(shortTimeVal||'morning');
+    selShortTime('morning');
   } else {
-    // All others: show half-day, show date range, hide time slots
     hdWrap.style.display='block';
     stWrap.style.display='none';
     dateWrap.style.display='flex';
-    selShortTime(null);
+    shortTimeVal=null;
+    // Keep existing half day selection or default to full
+    if(!halfDayVal||halfDayVal==='full') selHalfDay('full');
   }
+  calcADays();
   checkApplyBal();
 }
 function updateApplyBalance(){
