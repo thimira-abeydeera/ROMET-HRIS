@@ -341,10 +341,39 @@ tr:hover td{background:#fafffe;}
               <div class="ltype-btn" onclick="selLType('Short')" id="lt-Short"><div class="li">⏱</div>Short</div>
               <div class="ltype-btn" onclick="selLType('Duty')" id="lt-Duty" style="border-color:var(--blue);color:var(--blue);"><div class="li">🎖️</div>Duty</div>
             </div>
-            <div class="days-row" style="margin-bottom:12px;">
+            <div class="days-row" id="date-range-wrap" style="margin-bottom:12px;">
               <div class="field" style="flex:1;margin-bottom:0"><label>From Date</label><input type="date" id="a-from" onchange="calcADays()" /></div>
               <div class="field" style="flex:1;margin-bottom:0"><label>To Date</label><input type="date" id="a-to" onchange="calcADays()" /></div>
               <div class="days-badge" id="a-days-badge">—</div>
+            </div>
+            <!-- SHORT LEAVE TIME SLOTS -->
+            <div id="shorttime-wrap" style="display:none;margin-bottom:12px;">
+              <div class="field" style="margin-bottom:8px;"><label>Date</label><input type="date" id="a-short-date" onchange="document.getElementById('a-from').value=this.value;document.getElementById('a-to').value=this.value;" /></div>
+              <div style="font-size:12px;font-weight:600;color:var(--mid);margin-bottom:8px;">Select Time Slot</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div id="st-morning" onclick="selShortTime('morning')" style="border:1.5px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
+                  🌅 Morning<div style="font-size:11px;font-weight:400;margin-top:3px;color:inherit;">8:00am – 9:30am</div>
+                </div>
+                <div id="st-evening" onclick="selShortTime('evening')" style="border:1.5px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
+                  🌇 Evening<div style="font-size:11px;font-weight:400;margin-top:3px;color:inherit;">3:30pm – 5:00pm</div>
+                </div>
+              </div>
+              <div class="days-badge" id="a-days-badge-short" style="margin-top:8px;width:100%;text-align:center;font-size:12px;"></div>
+            </div>
+            <!-- HALF DAY SELECTOR - shows only for Annual/Casual -->
+            <div id="halfday-wrap" style="display:none;margin-bottom:12px;">
+              <div style="font-size:12px;font-weight:600;color:var(--mid);margin-bottom:8px;">Half Day Option</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <div class="halfday-btn active" id="hd-full" onclick="selHalfDay('full')" style="border:1.5px solid var(--accent);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--accent);color:white;font-size:12px;font-weight:600;transition:all .18s;">
+                  📅 Full Day
+                </div>
+                <div class="halfday-btn" id="hd-first" onclick="selHalfDay('first')" style="border:1.5px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
+                  🌅 First Half<div style="font-size:10px;font-weight:400;margin-top:2px;">8am – 12pm</div>
+                </div>
+                <div class="halfday-btn" id="hd-second" onclick="selHalfDay('second')" style="border:1.5px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--bg);color:var(--mid);font-size:12px;font-weight:600;transition:all .18s;">
+                  🌇 Second Half<div style="font-size:10px;font-weight:400;margin-top:2px;">12pm – 5pm</div>
+                </div>
+              </div>
             </div>
             <div class="field"><label>Reason</label><textarea id="a-reason" placeholder="Reason for leave…"></textarea></div>
             <div class="alert" id="a-alert"></div>
@@ -894,6 +923,39 @@ function renderMyLeave(){
 // APPLY
 // ═══════════════════════════════════════════
 let selLTypeVal=null;
+let halfDayVal='full'; // 'full', 'first', 'second'
+let shortTimeVal='morning'; // 'morning', 'evening'
+function selShortTime(val){
+  shortTimeVal=val;
+  ['morning','evening'].forEach(h=>{
+    const el=document.getElementById('st-'+h);
+    if(!el) return;
+    if(h===val){
+      el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)';
+    } else {
+      el.style.background='var(--bg)'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)';
+    }
+  });
+  if(val){
+    const badge=document.getElementById('a-days-badge');
+    badge.textContent=val==='morning'?'8am–9:30am':'3:30pm–5pm';
+    badge.className='days-badge';
+    checkApplyBal();
+  }
+}
+function selHalfDay(val){
+  halfDayVal=val;
+  ['full','first','second'].forEach(h=>{
+    const el=document.getElementById('hd-'+h);
+    if(!el) return;
+    if(h===val){
+      el.style.background='var(--accent)'; el.style.color='white'; el.style.borderColor='var(--accent)';
+    } else {
+      el.style.background='var(--bg)'; el.style.color='var(--mid)'; el.style.borderColor='var(--border)';
+    }
+  });
+  calcADays();
+}
 function renderApply(){
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('a-from').value=today;
@@ -908,7 +970,29 @@ function renderApply(){
   }
 }
 function getApplyUser(){ return currentUser.role==='admin'?allUsers[document.getElementById('a-emp-id')?.value]||currentUser:currentUser; }
-function selLType(t){ selLTypeVal=t; document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active')); document.getElementById('lt-'+t).classList.add('active'); checkApplyBal(); }
+function selLType(t){
+  selLTypeVal=t;
+  document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('lt-'+t).classList.add('active');
+  const hdWrap=document.getElementById('halfday-wrap');
+  const stWrap=document.getElementById('shorttime-wrap');
+  const dateWrap=document.getElementById('date-range-wrap');
+  if(t==='Short'){
+    // Short leave: show time slots, hide date range To, hide half-day
+    hdWrap.style.display='none';
+    stWrap.style.display='block';
+    dateWrap.style.display='none';
+    selHalfDay('full');
+    selShortTime(shortTimeVal||'morning');
+  } else {
+    // All others: show half-day, show date range, hide time slots
+    hdWrap.style.display='block';
+    stWrap.style.display='none';
+    dateWrap.style.display='flex';
+    selShortTime(null);
+  }
+  checkApplyBal();
+}
 function updateApplyBalance(){
   const u=getApplyUser(); if(!u) return;
   const bal=getBalance(u), ent=getEntitlements(u), stm=getShortUsedThisMonth(u.id);
@@ -924,14 +1008,27 @@ function updateApplyBalance(){
   checkApplyBal();
 }
 function calcADays(){
+  if(selLTypeVal==='Short') return; // handled by selShortTime
   const f=document.getElementById('a-from').value, t=document.getElementById('a-to').value, badge=document.getElementById('a-days-badge');
   if(f&&t){
-    const days=Math.round((new Date(t)-new Date(f))/86400000)+1;
+    let days=Math.round((new Date(t)-new Date(f))/86400000)+1;
     if(days<1){badge.textContent='!';badge.className='days-badge err';return;}
-    badge.textContent=days+(days===1?' day':' days'); badge.className='days-badge'; checkApplyBal();
+    if(halfDayVal==='first'||halfDayVal==='second'){
+      document.getElementById('a-to').value=f;
+      badge.textContent=halfDayVal==='first'?'½ day (AM)':'½ day (PM)'; badge.className='days-badge';
+    } else {
+      badge.textContent=days+(days===1?' day':' days'); badge.className='days-badge';
+    }
+    checkApplyBal();
   }
 }
-function getADays(){ const f=document.getElementById('a-from').value,t=document.getElementById('a-to').value; return f&&t?Math.round((new Date(t)-new Date(f))/86400000)+1:0; }
+function getADays(){
+  if(selLTypeVal==='Short') return 1; // 1 session
+  const f=document.getElementById('a-from').value,t=document.getElementById('a-to').value;
+  if(!f||!t) return 0;
+  if(halfDayVal==='first'||halfDayVal==='second') return 0.5;
+  return Math.round((new Date(t)-new Date(f))/86400000)+1;
+}
 function checkApplyBal(){
   const al=document.getElementById('a-alert'); if(!selLTypeVal){al.className='alert';return;}
   if(selLTypeVal==='Duty'){al.className='alert a-ok show';al.textContent='✓ Duty Leave has no limits.';return;}
@@ -941,25 +1038,47 @@ function checkApplyBal(){
   else al.className='alert';
 }
 function clearApplyForm(){
-  selLTypeVal=null; document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
+  selLTypeVal=null; halfDayVal='full'; shortTimeVal='morning';
+  document.querySelectorAll('.ltype-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('halfday-wrap').style.display='none';
+  document.getElementById('shorttime-wrap').style.display='none';
+  document.getElementById('date-range-wrap').style.display='flex';
+  selHalfDay('full');
+  selShortTime(null);
   document.getElementById('a-reason').value=''; document.getElementById('a-days-badge').textContent='—';
   document.getElementById('a-alert').className='alert';
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('a-from').value=today; document.getElementById('a-to').value=today;
+  const sd=document.getElementById('a-short-date'); if(sd) sd.value=today;
 }
 async function submitLeave(){
   const u=getApplyUser(); if(!u){toast('Select employee','t-err');return;}
   if(!selLTypeVal){toast('Select leave type','t-err');return;}
+  if(selLTypeVal==='Short'&&!shortTimeVal){toast('Select a time slot (Morning or Evening)','t-err');return;}
+  // For short leave, use the short date picker
+  if(selLTypeVal==='Short'){
+    const sd=document.getElementById('a-short-date').value;
+    if(!sd){toast('Select a date for short leave','t-err');return;}
+    document.getElementById('a-from').value=sd; document.getElementById('a-to').value=sd;
+  }
   const from=document.getElementById('a-from').value, to=document.getElementById('a-to').value;
   if(!from||!to){toast('Select dates','t-err');return;}
-  const days=getADays(); if(days<1){toast('Invalid dates','t-err');return;}
+  const days=getADays(); if(selLTypeVal!=='Short'&&days<1){toast('Invalid dates','t-err');return;}
   if(selLTypeVal!=='Duty'){const bal=getBalance(u);if(typeof bal[selLTypeVal]==='number'&&days>bal[selLTypeVal]){toast(`Insufficient ${selLTypeVal} Leave`,'t-err');return;}}
   const reason=document.getElementById('a-reason').value.trim();
   showLoading('Submitting…');
   try {
     const today=new Date().toISOString().split('T')[0];
-    await sbPost('requests',{user_id:u.id,type:selLTypeVal,from_date:from,to_date:to,days,reason,status:'Pending',applied_date:today,approved_by:'',note:''});
-    await sbPost('audit',{user_id:currentUser.id,action:`Submitted ${selLTypeVal} Leave for ${u.name} (${days} day${days>1?'s':''})`});
+    let finalNote='';
+    if(selLTypeVal==='Short'){
+      finalNote=shortTimeVal==='morning'?'[Morning: 8:00am – 9:30am]':'[Evening: 3:30pm – 5:00pm]';
+    } else if(halfDayVal==='first'){
+      finalNote='[First Half: 8am – 12pm]';
+    } else if(halfDayVal==='second'){
+      finalNote='[Second Half: 12pm – 5pm]';
+    }
+    await sbPost('requests',{user_id:u.id,type:selLTypeVal,from_date:from,to_date:to,days,reason,status:'Pending',applied_date:today,approved_by:'',note:finalNote});
+    await sbPost('audit',{user_id:currentUser.id,action:`Submitted ${selLTypeVal} Leave for ${u.name} (${days===0.5?'Half Day':selLTypeVal==='Short'?finalNote:days+' day'+(days>1?'s':'')})`});
     // Notify reporting person
     if(u.reporting&&allUsers[u.reporting]){
       await sbPost('notifications',{to_user:u.reporting,title:`New leave request from ${u.name}`,body:`${selLTypeVal} leave for ${days} day(s) from ${fmt(from)}`,req_id:0});
@@ -982,7 +1101,7 @@ function renderRequests(filtered){
     const u=allUsers[r.user_id]||{};
     return `<tr><td style="color:var(--dim)">${u.epf||''}</td><td><strong>${u.name||r.user_id}</strong></td><td style="color:var(--mid)">${u.dept||'—'}</td>
       <td><span class="badge b-${r.type.toLowerCase()}">${r.type}</span></td>
-      <td>${fmt(r.from_date)}</td><td>${fmt(r.to_date)}</td><td><strong>${r.days}</strong></td>
+      <td>${fmt(r.from_date)}</td><td>${fmt(r.to_date)}</td><td><strong>${r.days}</strong>${r.note?`<br><span style='font-size:10px;color:var(--blue);'>${r.note}</span>`:''}</td>
       <td><span class="badge b-${r.status.toLowerCase()}">${r.status}</span></td>
       <td><button class="btn btn-sm btn-outline" onclick="openLeaveModal(${r.id})">View</button></td></tr>`;
   }).join(''):`<tr class="empty-row"><td colspan="9">No requests found.</td></tr>`;
@@ -1078,6 +1197,7 @@ function openLeaveModal(id){
     <div class="detail-row"><span class="dl">Reason</span>${r.reason||'—'}</div>
     <div class="detail-row"><span class="dl">Applied On</span>${fmt(r.applied_date)}</div>
     <div class="detail-row"><span class="dl">Status</span><span class="badge b-${r.status.toLowerCase()}">${r.status}</span></div>
+    ${r.note?`<div class="detail-row"><span class="dl">Half Day</span><span style="background:var(--blue-lt);color:var(--blue);padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">${r.note}</span></div>`:''}
     ${r.approved_by?`<div class="detail-row"><span class="dl">Actioned By</span>${allUsers[r.approved_by]?.name||r.approved_by}</div>`:''}`;
   const canApprove=currentUser.role==='admin'||(currentUser.role==='reporting'&&allUsers[r.user_id]?.reporting===currentUser.id);
   const acts=document.getElementById('lm-actions');
