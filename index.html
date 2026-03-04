@@ -863,7 +863,7 @@ async function showView(v){
   if(v==='requests') renderRequests();
   if(v==='employees') renderEmployees();
   if(v==='reports') renderReports();
-  if(v==='holidays') renderHolidays();
+  if(v==='holidays') await renderHolidays();
   if(v==='settings') renderSettings();
   closeNotif();
   setupSidebar();
@@ -1623,7 +1623,7 @@ function countWorkingDays(from, to){
   return count;
 }
 
-function renderHolidays(){
+async function renderHolidays(){
   // Populate year options dynamically
   const ysel = document.getElementById('holiday-year-filter');
   if(ysel && ysel.options.length === 0){
@@ -1635,6 +1635,29 @@ function renderHolidays(){
       ysel.appendChild(opt);
     }
   }
+
+  // If no holidays loaded yet, try loading now
+  if(allHolidays.length === 0){
+    document.getElementById('holiday-body').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--mid);">⏳ Loading holidays…</td></tr>';
+    try {
+      const h = await sbGet('holidays','order=date.asc');
+      allHolidays = h || [];
+      // Seed if still empty
+      if(allHolidays.length === 0){
+        showLoading('Seeding Sri Lanka 2026 holidays…');
+        for(const hol of SL_HOLIDAYS){
+          try { await sbPost('holidays', hol); } catch(e){}
+        }
+        const h2 = await sbGet('holidays','order=date.asc');
+        allHolidays = h2 || [];
+        hideLoading();
+      }
+    } catch(e){
+      document.getElementById('holiday-body').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--red);">❌ Could not load holidays. Make sure the holidays table exists in Supabase.<br><small>${e.message}</small></td></tr>`;
+      return;
+    }
+  }
+
   const year = ysel?.value || String(new Date().getFullYear());
   const filtered = allHolidays.filter(h => h.date && h.date.startsWith(year));
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
