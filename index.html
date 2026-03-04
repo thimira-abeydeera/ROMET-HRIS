@@ -1541,30 +1541,43 @@ function exportExcel(){
 let allHolidays = [];
 
 const SL_HOLIDAYS = [
-  // ── 2026 Sri Lanka Statutory Holidays (Shop & Office Act) ──
+  // ── 2026 Sri Lanka Statutory Holidays ──
+  // Source: EFC Circular No. 26/2025 — Shop & Office Employees Act
+  // January
   {date:'2026-01-03',name:'Duruthu Full Moon Poya Day',type:'Poya'},
-  {date:'2026-01-14',name:'Tamil Thai Pongal Day',type:'National'},
+  {date:'2026-01-15',name:'Tamil Thai Pongal Day',type:'National'},
+  // February
   {date:'2026-02-01',name:'Navam Full Moon Poya Day',type:'Poya'},
   {date:'2026-02-04',name:'Independence Day',type:'National'},
-  {date:'2026-02-15',name:'Maha Sivarathri Day',type:'National'},
-  {date:'2026-03-02',name:'Medin Full Moon Poya Day',type:'Poya'},
-  {date:'2026-03-20',name:'Id-ul-Fitr (Ramazan Festival)',type:'National'},
+  // March
+  {date:'2026-03-02',name:'Madin Full Moon Poya Day',type:'Poya'},
+  {date:'2026-03-21',name:'Id-ul-Fitr — Ramazan Festival Day',type:'National'},
+  // April
   {date:'2026-04-01',name:'Bak Full Moon Poya Day',type:'Poya'},
   {date:'2026-04-03',name:'Good Friday',type:'National'},
-  {date:'2026-04-13',name:'Sinhala & Tamil New Year Eve',type:'National'},
+  {date:'2026-04-13',name:'Day Prior to Sinhala & Tamil New Year Day',type:'National'},
   {date:'2026-04-14',name:'Sinhala & Tamil New Year Day',type:'National'},
-  {date:'2026-04-30',name:'Vesak Full Moon Poya Day',type:'Poya'},
-  {date:'2026-05-01',name:'Labour Day',type:'National'},
-  {date:'2026-05-28',name:'Id-ul-Alha (Hadji Festival)',type:'National'},
-  {date:'2026-05-30',name:'Poson Full Moon Poya Day',type:'Poya'},
-  {date:'2026-06-29',name:'Esala Full Moon Poya Day',type:'Poya'},
-  {date:'2026-07-28',name:'Nikini Full Moon Poya Day',type:'Poya'},
-  {date:'2026-08-27',name:'Binara Full Moon Poya Day',type:'Poya'},
-  {date:'2026-09-25',name:'Milad-un-Nabi (Prophet\'s Birthday)',type:'National'},
-  {date:'2026-09-26',name:'Vap Full Moon Poya Day',type:'Poya'},
-  {date:'2026-10-25',name:'Deepavali Festival Day',type:'National'},
-  {date:'2026-10-26',name:'Il Full Moon Poya Day',type:'Poya'},
-  {date:'2026-11-24',name:'Unduvap Full Moon Poya Day',type:'Poya'},
+  {date:'2026-04-30',name:'Additional Half Holiday (in lieu of Day following Vesak)',type:'National'},
+  // May
+  {date:'2026-05-01',name:'May Day',type:'National'},
+  {date:'2026-05-01',name:'Vesak Full Moon Poya Day',type:'Poya'},
+  {date:'2026-05-02',name:'Day Following Vesak Full Moon Poya Day',type:'National'},
+  {date:'2026-05-30',name:'Adhi Poson Full Moon Poya Day',type:'Poya'},
+  // June
+  {date:'2026-06-29',name:'Poson Full Moon Poya Day',type:'Poya'},
+  // July
+  {date:'2026-07-29',name:'Esala Full Moon Poya Day',type:'Poya'},
+  // August
+  {date:'2026-08-26',name:'Holy Prophet\'s Birthday (Milad-Un-Nabi)',type:'National'},
+  {date:'2026-08-27',name:'Nikini Full Moon Poya Day',type:'Poya'},
+  // September
+  {date:'2026-09-26',name:'Binara Full Moon Poya Day',type:'Poya'},
+  // October
+  {date:'2026-10-25',name:'Vap Full Moon Poya Day',type:'Poya'},
+  // November
+  {date:'2026-11-24',name:'Ill Full Moon Poya Day',type:'Poya'},
+  // December
+  {date:'2026-12-23',name:'Unduvap Full Moon Poya Day',type:'Poya'},
   {date:'2026-12-25',name:'Christmas Day',type:'National'},
 ];
 
